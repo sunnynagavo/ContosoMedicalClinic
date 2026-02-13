@@ -48,7 +48,18 @@ public class AppointmentService(DabHttpClient dab) : IAppointmentService
         await dab.CreateAsync<AppointmentDto>("Appointment", appointment);
 
     public async Task<AppointmentDto> UpdateAppointmentAsync(int appointmentId, AppointmentDto appointment) =>
-        await dab.UpdateAsync<AppointmentDto>("Appointment", appointmentId, appointment);
+        await dab.UpdateAsync<AppointmentDto>("Appointment", appointmentId, new
+        {
+            appointment.PatientId,
+            appointment.ProviderId,
+            appointment.ServiceId,
+            appointment.AppointmentDate,
+            appointment.StartTime,
+            appointment.EndTime,
+            appointment.Status,
+            appointment.Notes,
+            appointment.CancellationReason
+        });
 
     public async Task CancelAppointmentAsync(int appointmentId, string? reason) =>
         await dab.UpdateAsync<AppointmentDto>("Appointment", appointmentId,

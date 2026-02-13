@@ -183,8 +183,14 @@
     {
         try
         {
-            var reason = newStatus == "Cancelled" ? "Cancelled by staff" : null;
-            await AppointmentSvc.UpdateAppointmentAsync(id, apt with { Status = newStatus, CancellationReason = reason });
+            if (newStatus == "Cancelled")
+            {
+                await AppointmentSvc.CancelAppointmentAsync(id, "Cancelled by staff");
+            }
+            else
+            {
+                await AppointmentSvc.UpdateAppointmentAsync(id, apt with { Status = newStatus });
+            }
             _statusMessage = $"Appointment #{id} updated to {newStatus}";
             await LoadAppointments();
         }
