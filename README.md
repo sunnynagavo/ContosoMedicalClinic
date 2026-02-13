@@ -402,4 +402,6 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 *A fictitious application for educational and demonstration purposes.*
 
+*Last updated: February 2026*
+
 </div>
