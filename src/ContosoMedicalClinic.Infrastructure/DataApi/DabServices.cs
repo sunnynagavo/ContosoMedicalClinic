@@ -61,6 +61,10 @@ public class AppointmentService(DabHttpClient dab) : IAppointmentService
             appointment.CancellationReason
         });
 
+    public async Task UpdateStatusAsync(int appointmentId, string status) =>
+        await dab.UpdateAsync<AppointmentDto>("Appointment", appointmentId,
+            new { Status = status });
+
     public async Task CancelAppointmentAsync(int appointmentId, string? reason) =>
         await dab.UpdateAsync<AppointmentDto>("Appointment", appointmentId,
             new { Status = "Cancelled", CancellationReason = reason });

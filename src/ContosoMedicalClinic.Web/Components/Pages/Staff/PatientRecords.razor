@@ -12,6 +12,11 @@
     <div class="container">
         <h2 class="section-title mb-4"><i class="bi bi-person-lines-fill me-2"></i>Patient Records</h2>
 
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@_error</div>
+        }
+
         @if (PatientId == 0)
         {
             <!-- Patient List -->
@@ -117,9 +122,11 @@
     private PatientDto? _selectedPatient;
     private MedicalRecordDto? _medicalRecord;
     private List<VisitNoteDto> _visitNotes = [];
+    private string? _error;
 
     protected override async Task OnParametersSetAsync()
     {
+        _error = null;
         try
         {
             if (PatientId == 0)
@@ -129,12 +136,13 @@
             else
             {
                 _selectedPatient = await PatientSvc.GetPatientAsync(PatientId);
-                _medicalRecord = await MedRecordSvc.GetRecordByPatientAsync(PatientId);
-                _visitNotes = await MedRecordSvc.GetVisitNotesByPatientAsync(PatientId);
+                try { _medicalRecord = await MedRecordSvc.GetRecordByPatientAsync(PatientId); } catch { _medicalRecord = null; }
+                try { _visitNotes = await MedRecordSvc.GetVisitNotesByPatientAsync(PatientId); } catch { _visitNotes = []; }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            _error = ex.Message;
             _patients = [];
             _visitNotes = [];
         }

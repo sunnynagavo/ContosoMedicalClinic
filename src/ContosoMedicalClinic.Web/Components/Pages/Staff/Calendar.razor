@@ -189,7 +189,7 @@
             }
             else
             {
-                await AppointmentSvc.UpdateAppointmentAsync(id, apt with { Status = newStatus });
+                await AppointmentSvc.UpdateStatusAsync(id, newStatus);
             }
             _statusMessage = $"Appointment #{id} updated to {newStatus}";
             await LoadAppointments();
