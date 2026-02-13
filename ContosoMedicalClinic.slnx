@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ContosoMedicalClinic.AppHost/ContosoMedicalClinic.AppHost.csproj" />
+    <Project Path="src/ContosoMedicalClinic.Application/ContosoMedicalClinic.Application.csproj" />
+    <Project Path="src/ContosoMedicalClinic.DbInitializer/ContosoMedicalClinic.DbInitializer.csproj" />
+    <Project Path="src/ContosoMedicalClinic.Domain/ContosoMedicalClinic.Domain.csproj" />
+    <Project Path="src/ContosoMedicalClinic.Infrastructure/ContosoMedicalClinic.Infrastructure.csproj" />
+    <Project Path="src/ContosoMedicalClinic.ServiceDefaults/ContosoMedicalClinic.ServiceDefaults.csproj" />
+    <Project Path="src/ContosoMedicalClinic.Web/ContosoMedicalClinic.Web.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,150 @@
+@page "/patient/invoices"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Patient")]
+@inject IInvoiceService InvoiceSvc
+@inject IPaymentService PaymentSvc
+@rendermode InteractiveServer
+
+<PageTitle>My Invoices - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-receipt me-2"></i>My Invoices</h2>
+
+        @if (_invoices is null)
+        {
+            <div class="loading-spinner"><div class="spinner-border text-primary" role="status"></div></div>
+        }
+        else if (_invoices.Count == 0)
+        {
+            <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>No invoices found.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-clinic table-hover">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Insurance Adj.</th>
+                            <th>Balance Due</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in _invoices)
+                        {
+                            <tr>
+                                <td class="fw-bold">@inv.InvoiceNumber</td>
+                                <td>@inv.InvoiceDate</td>
+                                <td>@inv.TotalAmount.ToString("C")</td>
+                                <td>@inv.InsuranceAdjustment.ToString("C")</td>
+                                <td class="fw-bold">@inv.BalanceDue.ToString("C")</td>
+                                <td><span class="badge badge-@inv.Status.ToLower()">@inv.Status</span></td>
+                                <td>
+                                    @if (inv.BalanceDue > 0 && inv.Status != "Paid" && inv.Status != "Cancelled")
+                                    {
+                                        <button class="btn btn-sm btn-accent" @onclick="() => ShowPaymentModal(inv)">
+                                            <i class="bi bi-credit-card me-1"></i>Pay
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- Payment Modal -->
+        @if (_showPayment && _selectedInvoice is not null)
+        {
+            <div class="modal d-block" style="background:rgba(0,0,0,0.5);">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Pay Invoice @_selectedInvoice.InvoiceNumber</h5>
+                            <button class="btn-close" @onclick="() => _showPayment = false"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Balance Due: <strong class="text-primary">@_selectedInvoice.BalanceDue.ToString("C")</strong></p>
+                            <div class="mb-3">
+                                <label class="form-label">Payment Amount</label>
+                                <input type="number" class="form-control" @bind="_paymentAmount" step="0.01" max="@_selectedInvoice.BalanceDue" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Payment Method</label>
+                                <select class="form-select" @bind="_paymentMethod">
+                                    <option value="CreditCard">Credit Card</option>
+                                    <option value="DebitCard">Debit Card</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Check">Check</option>
+                                </select>
+                            </div>
+                            @if (_paymentSuccess)
+                            {
+                                <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>Payment processed successfully!</div>
+                            }
+                            @if (!string.IsNullOrEmpty(_paymentError))
+                            {
+                                <div class="alert alert-danger">@_paymentError</div>
+                            }
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" @onclick="() => _showPayment = false">Close</button>
+                            <button class="btn btn-primary" @onclick="SubmitPayment" disabled="@_paymentSuccess">
+                                <i class="bi bi-check-circle me-1"></i>Submit Payment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<InvoiceDto>? _invoices;
+    private InvoiceDto? _selectedInvoice;
+    private bool _showPayment;
+    private decimal _paymentAmount;
+    private string _paymentMethod = "CreditCard";
+    private bool _paymentSuccess;
+    private string? _paymentError;
+    private const int DemoPatientId = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _invoices = await InvoiceSvc.GetInvoicesByPatientAsync(DemoPatientId); }
+        catch { _invoices = []; }
+    }
+
+    private void ShowPaymentModal(InvoiceDto invoice)
+    {
+        _selectedInvoice = invoice;
+        _paymentAmount = invoice.BalanceDue;
+        _paymentSuccess = false;
+        _paymentError = null;
+        _showPayment = true;
+    }
+
+    private async Task SubmitPayment()
+    {
+        _paymentError = null;
+        try
+        {
+            await PaymentSvc.CreatePaymentAsync(new CreatePaymentDto(
+                InvoiceId: _selectedInvoice!.InvoiceId,
+                PatientId: DemoPatientId,
+                Amount: _paymentAmount,
+                PaymentMethod: _paymentMethod
+            ));
+            _paymentSuccess = true;
+            _invoices = await InvoiceSvc.GetInvoicesByPatientAsync(DemoPatientId);
+        }
+        catch (Exception ex) { _paymentError = ex.Message; }
+    }
+}

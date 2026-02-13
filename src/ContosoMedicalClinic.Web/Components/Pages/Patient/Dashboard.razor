@@ -1,0 +1,142 @@
+@page "/patient/dashboard"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Patient")]
+@inject IAppointmentService AppointmentSvc
+@inject IInvoiceService InvoiceSvc
+@rendermode InteractiveServer
+
+<PageTitle>Patient Dashboard - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-speedometer2 me-2"></i>Patient Dashboard</h2>
+
+        <!-- Quick Actions -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <a href="/patient/appointments/book" class="card p-4 text-decoration-none h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="service-icon me-3" style="width:48px;height:48px;font-size:1.2rem;"><i class="bi bi-calendar-plus"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">Book Appointment</h6>
+                            <small class="text-muted">Schedule a new visit</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="/patient/visits" class="card p-4 text-decoration-none h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="service-icon me-3" style="width:48px;height:48px;font-size:1.2rem;"><i class="bi bi-journal-medical"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">Visit History</h6>
+                            <small class="text-muted">View past reports</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="/patient/invoices" class="card p-4 text-decoration-none h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="service-icon me-3" style="width:48px;height:48px;font-size:1.2rem;"><i class="bi bi-receipt"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">My Invoices</h6>
+                            <small class="text-muted">View & pay bills</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Upcoming Appointments -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-white border-0 pt-3">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-calendar-check text-primary me-2"></i>Upcoming Appointments</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (_appointments is null)
+                        {
+                            <div class="loading-spinner"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                        }
+                        else if (_appointments.Count == 0)
+                        {
+                            <p class="text-muted">No upcoming appointments. <a href="/patient/appointments/book">Book one now!</a></p>
+                        }
+                        else
+                        {
+                            @foreach (var apt in _appointments.Take(5))
+                            {
+                                <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <strong>@apt.AppointmentDate</strong>
+                                        <br /><small class="text-muted">@apt.StartTime - @apt.EndTime</small>
+                                    </div>
+                                    <span class="badge badge-@apt.Status.ToLower()">@apt.Status</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Invoices -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-white border-0 pt-3">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-receipt text-primary me-2"></i>Recent Invoices</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (_invoices is null)
+                        {
+                            <div class="loading-spinner"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                        }
+                        else if (_invoices.Count == 0)
+                        {
+                            <p class="text-muted">No invoices found.</p>
+                        }
+                        else
+                        {
+                            @foreach (var inv in _invoices.Take(5))
+                            {
+                                <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <strong>@inv.InvoiceNumber</strong>
+                                        <br /><small class="text-muted">@inv.InvoiceDate</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge badge-@inv.Status.ToLower()">@inv.Status</span>
+                                        <br /><strong>@inv.BalanceDue.ToString("C")</strong>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<AppointmentDto>? _appointments;
+    private List<InvoiceDto>? _invoices;
+
+    // Demo: using PatientId=1 (would come from auth in real app)
+    private const int DemoPatientId = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _appointments = await AppointmentSvc.GetAppointmentsByPatientAsync(DemoPatientId);
+            _invoices = await InvoiceSvc.GetInvoicesByPatientAsync(DemoPatientId);
+        }
+        catch
+        {
+            _appointments = [];
+            _invoices = [];
+        }
+    }
+}

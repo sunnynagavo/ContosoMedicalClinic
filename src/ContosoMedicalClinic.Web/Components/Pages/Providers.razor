@@ -1,0 +1,61 @@
+@page "/providers"
+@inject IProviderService ProviderSvc
+@rendermode InteractiveServer
+
+<PageTitle>Our Providers - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4">Our Providers</h2>
+
+        @if (_providers is null)
+        {
+            <div class="loading-spinner"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+        }
+        else if (_providers.Count == 0)
+        {
+            <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>Provider information is being updated. Please check back soon.</div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var provider in _providers)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center p-4">
+                                <div class="service-icon mx-auto mb-3">
+                                    <i class="bi bi-person-circle"></i>
+                                </div>
+                                <h5 class="fw-bold mb-1">@(provider.Title) Provider #@provider.ProviderId</h5>
+                                <p class="text-muted small mb-3">Staff ID: @provider.StaffId</p>
+                                @if (provider.AcceptsNewPatients)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Accepting New Patients</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Not Accepting New Patients</span>
+                                }
+                                @if (!string.IsNullOrEmpty(provider.Bio))
+                                {
+                                    <p class="mt-3 small text-muted">@provider.Bio</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<ProviderDto>? _providers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _providers = await ProviderSvc.GetProvidersAsync(); }
+        catch { _providers = []; }
+    }
+}

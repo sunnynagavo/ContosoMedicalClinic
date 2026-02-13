@@ -1,0 +1,237 @@
+@page "/patient/appointments/book"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Patient")]
+@inject IServiceCatalogService ServiceCatalog
+@inject IProviderService ProviderSvc
+@inject IAppointmentService AppointmentSvc
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Book Appointment - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-calendar-plus me-2"></i>Book an Appointment</h2>
+
+        <div class="card p-4">
+            <!-- Step Indicators -->
+            <div class="d-flex justify-content-center mb-4">
+                @for (int i = 1; i <= 4; i++)
+                {
+                    var step = i;
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center @(step <= _currentStep ? "bg-primary text-white" : "bg-light text-muted")"
+                             style="width:36px;height:36px;font-weight:bold;">@step</div>
+                        <span class="ms-2 me-4 small fw-bold @(step <= _currentStep ? "text-primary" : "text-muted")">
+                            @_stepLabels[step - 1]
+                        </span>
+                    </div>
+                }
+            </div>
+
+            <!-- Step 1: Select Service -->
+            @if (_currentStep == 1)
+            {
+                <h5 class="fw-bold mb-3">Select a Service</h5>
+                @if (_categories is null)
+                {
+                    <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+                }
+                else
+                {
+                    @foreach (var cat in _categories)
+                    {
+                        <h6 class="text-primary mt-3">@cat.Name</h6>
+                        <div class="row g-2">
+                            @foreach (var svc in _services.Where(s => s.CategoryId == cat.CategoryId))
+                            {
+                                <div class="col-md-6">
+                                    <div class="card p-3 selectable-card @(_selectedServiceId == svc.ServiceId ? "selected" : "")"
+                                         @onclick="() => SelectService(svc.ServiceId)">
+                                        <div class="d-flex justify-content-between pe-4">
+                                            <strong>@svc.Name</strong>
+                                            <span class="text-primary fw-bold">@svc.DefaultPrice.ToString("C")</span>
+                                        </div>
+                                        <small class="text-muted"><i class="bi bi-clock me-1"></i>@svc.DefaultDurationMinutes min</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    <div class="mt-3 text-end">
+                        <button class="btn btn-primary" disabled="@(_selectedServiceId == 0)" @onclick="NextStep">
+                            Next <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                }
+            }
+
+            <!-- Step 2: Select Provider -->
+            @if (_currentStep == 2)
+            {
+                <h5 class="fw-bold mb-3">Select a Provider</h5>
+                @if (_providers is null)
+                {
+                    <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (var prov in _providers)
+                        {
+                            <div class="col-md-4">
+                                <div class="card p-3 text-center selectable-card @(_selectedProviderId == prov.ProviderId ? "selected" : "")"
+                                     @onclick="() => _selectedProviderId = prov.ProviderId">
+                                    <div class="service-icon mx-auto mb-2" style="width:48px;height:48px;font-size:1.2rem;">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <strong>@(prov.Title ?? "Dr.") @(prov.FirstName ?? "") @(prov.LastName ?? $"Provider #{prov.ProviderId}")</strong>
+                                    @if (!string.IsNullOrEmpty(prov.Specialization))
+                                    {
+                                        <small class="text-muted d-block">@prov.Specialization</small>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="mt-3 d-flex justify-content-between">
+                        <button class="btn btn-outline-secondary" @onclick="PrevStep"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                        <button class="btn btn-primary" disabled="@(_selectedProviderId == 0)" @onclick="NextStep">Next <i class="bi bi-arrow-right ms-1"></i></button>
+                    </div>
+                }
+            }
+
+            <!-- Step 3: Select Date & Time -->
+            @if (_currentStep == 3)
+            {
+                <h5 class="fw-bold mb-3">Select Date & Time</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Date</label>
+                        <input type="date" class="form-control" @bind="_selectedDate" min="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Time</label>
+                        <select class="form-select" @bind="_selectedTime">
+                            <option value="">Select a time slot</option>
+                            @foreach (var slot in _timeSlots)
+                            {
+                                <option value="@slot">@slot</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-3 d-flex justify-content-between">
+                    <button class="btn btn-outline-secondary" @onclick="PrevStep"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                    <button class="btn btn-primary" disabled="@(!_selectedDate.HasValue || string.IsNullOrEmpty(_selectedTime))" @onclick="NextStep">
+                        Next <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            }
+
+            <!-- Step 4: Confirm -->
+            @if (_currentStep == 4)
+            {
+                <h5 class="fw-bold mb-3">Confirm Appointment</h5>
+                <div class="card bg-light p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Service:</strong> @(_services.FirstOrDefault(s => s.ServiceId == _selectedServiceId)?.Name ?? "N/A")</p>
+                            <p><strong>Provider:</strong> @{ var selProv = _providers?.FirstOrDefault(p => p.ProviderId == _selectedProviderId); }@(selProv != null ? $"{selProv.Title ?? "Dr."} {selProv.FirstName} {selProv.LastName}" : $"Provider #{_selectedProviderId}")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Date:</strong> @_selectedDate?.ToString("yyyy-MM-dd")</p>
+                            <p><strong>Time:</strong> @_selectedTime</p>
+                        </div>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="alert alert-danger mt-3">@_errorMessage</div>
+                }
+                @if (_bookingSuccess)
+                {
+                    <div class="alert alert-success mt-3"><i class="bi bi-check-circle me-2"></i>Appointment booked successfully! Redirecting...</div>
+                }
+                <div class="mt-3 d-flex justify-content-between">
+                    <button class="btn btn-outline-secondary" @onclick="PrevStep"><i class="bi bi-arrow-left me-1"></i>Back</button>
+                    <button class="btn btn-primary btn-lg" @onclick="ConfirmBooking" disabled="@_bookingSuccess">
+                        <i class="bi bi-check-circle me-2"></i>Confirm Booking
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private int _currentStep = 1;
+    private readonly string[] _stepLabels = ["Service", "Provider", "Date & Time", "Confirm"];
+
+    private List<ServiceCategoryDto>? _categories;
+    private List<ServiceDto> _services = [];
+    private List<ProviderDto>? _providers;
+
+    private int _selectedServiceId;
+    private int _selectedProviderId;
+    private DateOnly? _selectedDate;
+    private string _selectedTime = "";
+    private string? _errorMessage;
+    private bool _bookingSuccess;
+
+    private readonly List<string> _timeSlots =
+    [
+        "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+        "11:00", "11:30", "13:00", "13:30", "14:00", "14:30",
+        "15:00", "15:30", "16:00", "16:30"
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _categories = await ServiceCatalog.GetCategoriesAsync();
+            _services = await ServiceCatalog.GetServicesAsync();
+            _providers = await ProviderSvc.GetProvidersAsync();
+        }
+        catch
+        {
+            _categories = [];
+            _services = [];
+            _providers = [];
+        }
+    }
+
+    private void SelectService(int serviceId) => _selectedServiceId = serviceId;
+    private void NextStep() => _currentStep++;
+    private void PrevStep() => _currentStep--;
+
+    private async Task ConfirmBooking()
+    {
+        _errorMessage = null;
+        try
+        {
+            var svc = _services.FirstOrDefault(s => s.ServiceId == _selectedServiceId);
+            var duration = svc?.DefaultDurationMinutes ?? 30;
+            var startTime = TimeSpan.Parse(_selectedTime);
+            var endTime = startTime.Add(TimeSpan.FromMinutes(duration));
+
+            await AppointmentSvc.CreateAppointmentAsync(new CreateAppointmentDto(
+                PatientId: 1, // Demo patient
+                ProviderId: _selectedProviderId,
+                ServiceId: _selectedServiceId,
+                AppointmentDate: _selectedDate!.Value.ToString("yyyy-MM-dd"),
+                StartTime: startTime.ToString(@"hh\:mm"),
+                EndTime: endTime.ToString(@"hh\:mm")
+            ));
+
+            _bookingSuccess = true;
+            await Task.Delay(2000);
+            Navigation.NavigateTo("/patient/appointments");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to book appointment: {ex.Message}";
+        }
+    }
+}

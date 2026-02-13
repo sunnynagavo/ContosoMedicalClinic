@@ -1,0 +1,152 @@
+@page "/login"
+@layout ContosoMedicalClinic.Web.Components.Layout.MainLayout
+@rendermode InteractiveServer
+
+<PageTitle>Login - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card p-4 shadow-sm">
+                    <div class="text-center mb-4">
+                        <div class="service-icon mx-auto mb-3">
+                            <i class="bi bi-person-lock"></i>
+                        </div>
+                        <h3 class="fw-bold">Welcome Back</h3>
+                        <p class="text-muted">Sign in to your account</p>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@_error</div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control" placeholder="you@example.com"
+                                   @bind="_email" @bind:event="oninput" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" placeholder="Enter your password"
+                                   @bind="_password" @bind:event="oninput" @onkeydown="HandleKeyDown" />
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100 btn-lg mt-2" @onclick="HandleLogin" disabled="@_isLoading">
+                        @if (_isLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </button>
+
+                    <hr class="my-4" />
+                    <p class="text-center mb-0">
+                        Don't have an account? <a href="/register" class="text-primary fw-bold">Create one</a>
+                    </p>
+                </div>
+
+                <!-- Demo Accounts Card -->
+                <div class="card p-3 mt-3 border-info">
+                    <h6 class="fw-bold text-info mb-2"><i class="bi bi-info-circle me-2"></i>Demo Accounts</h6>
+                    <p class="small text-muted mb-2">Password for all: <code>Password1!</code></p>
+                    <div class="row g-2 small">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-success me-2">Patient</span>
+                                <a href="#" class="text-decoration-none" @onclick='() => FillDemo("john.smith@email.com")' @onclick:preventDefault>john.smith@email.com</a>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-primary me-2">Doctor</span>
+                                <a href="#" class="text-decoration-none" @onclick='() => FillDemo("sarah.chen@contoso.com")' @onclick:preventDefault>sarah.chen@contoso.com</a>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-warning text-dark me-2">Staff</span>
+                                <a href="#" class="text-decoration-none" @onclick='() => FillDemo("jennifer.l@contoso.com")' @onclick:preventDefault>jennifer.l@contoso.com</a>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="badge bg-danger me-2">Admin</span>
+                                <a href="#" class="text-decoration-none" @onclick='() => FillDemo("admin@contoso.com")' @onclick:preventDefault>admin@contoso.com</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private IAuthService AuthSvc { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private string _email = "";
+    private string _password = "";
+    private string? _error;
+    private bool _isLoading;
+
+    private void FillDemo(string email)
+    {
+        _email = email;
+        _password = "Password1!";
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await HandleLogin();
+    }
+
+    private async Task HandleLogin()
+    {
+        _error = null;
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "Please enter both email and password.";
+            return;
+        }
+
+        _isLoading = true;
+        try
+        {
+            var user = await AuthSvc.GetUserByEmailAsync(_email.Trim());
+            if (user is null || !user.IsActive)
+            {
+                _error = "No active account found with that email.";
+                return;
+            }
+
+            var valid = await AuthSvc.ValidatePasswordAsync(_password, user.PasswordHash);
+            if (!valid)
+            {
+                _error = "Invalid password. Please try again.";
+                return;
+            }
+
+            // Redirect to the login callback endpoint which sets the cookie
+            var uri = $"/api/auth/login?email={Uri.EscapeDataString(user.Email)}&name={Uri.EscapeDataString(user.DisplayName)}&role={Uri.EscapeDataString(user.Role)}&patientId={user.PatientId}&staffId={user.StaffId}";
+            Navigation.NavigateTo(uri, forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            _error = $"Login failed: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

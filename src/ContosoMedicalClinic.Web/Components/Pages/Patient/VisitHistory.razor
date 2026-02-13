@@ -1,0 +1,71 @@
+@page "/patient/visits"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Patient")]
+@inject IMedicalRecordService MedRecordSvc
+@rendermode InteractiveServer
+
+<PageTitle>Visit History - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-journal-medical me-2"></i>Visit History</h2>
+
+        @if (_visitNotes is null)
+        {
+            <div class="loading-spinner"><div class="spinner-border text-primary" role="status"></div></div>
+        }
+        else if (_visitNotes.Count == 0)
+        {
+            <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>No visit records found.</div>
+        }
+        else
+        {
+            @foreach (var note in _visitNotes)
+            {
+                <div class="card mb-3 p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="fw-bold mb-0">Visit Note #@note.VisitNoteId</h5>
+                        <span class="badge bg-primary">Appointment #@note.AppointmentId</span>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            @if (!string.IsNullOrEmpty(note.ChiefComplaint))
+                            {
+                                <p><strong>Chief Complaint:</strong> @note.ChiefComplaint</p>
+                            }
+                            @if (!string.IsNullOrEmpty(note.Diagnosis))
+                            {
+                                <p><strong>Diagnosis:</strong> @note.Diagnosis</p>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            @if (!string.IsNullOrEmpty(note.TreatmentPlan))
+                            {
+                                <p><strong>Treatment Plan:</strong> @note.TreatmentPlan</p>
+                            }
+                            @if (!string.IsNullOrEmpty(note.Prescriptions))
+                            {
+                                <p><strong>Prescriptions:</strong> @note.Prescriptions</p>
+                            }
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(note.FollowUpNotes))
+                    {
+                        <p class="text-muted small mt-2"><i class="bi bi-arrow-return-right me-1"></i><strong>Follow-up:</strong> @note.FollowUpNotes</p>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<VisitNoteDto>? _visitNotes;
+    private const int DemoPatientId = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _visitNotes = await MedRecordSvc.GetVisitNotesByPatientAsync(DemoPatientId); }
+        catch { _visitNotes = []; }
+    }
+}

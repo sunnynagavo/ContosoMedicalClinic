@@ -1,0 +1,76 @@
+@page "/admin/services"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject IServiceCatalogService ServiceCatalogSvc
+@rendermode InteractiveServer
+
+<PageTitle>Service Catalog - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-list-check me-2"></i>Service Catalog Management</h2>
+
+        @if (_categories is null)
+        {
+            <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        }
+        else
+        {
+            @foreach (var cat in _categories)
+            {
+                <div class="card p-4 mb-4">
+                    <h5 class="fw-bold text-primary mb-3">@cat.Name</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Service Name</th>
+                                    <th>Duration</th>
+                                    <th>Price</th>
+                                    <th>Code</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var svc in _services.Where(s => s.CategoryId == cat.CategoryId))
+                                {
+                                    <tr>
+                                        <td>@svc.ServiceId</td>
+                                        <td class="fw-bold">@svc.Name</td>
+                                        <td>@svc.DefaultDurationMinutes min</td>
+                                        <td class="text-primary fw-bold">@svc.DefaultPrice.ToString("C")</td>
+                                        <td><code>@svc.ProcedureCode</code></td>
+                                        <td>
+                                            @if (svc.IsActive) { <span class="badge bg-success">Active</span> }
+                                            else { <span class="badge bg-secondary">Inactive</span> }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<ServiceCategoryDto>? _categories;
+    private List<ServiceDto> _services = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _categories = await ServiceCatalogSvc.GetCategoriesAsync();
+            _services = await ServiceCatalogSvc.GetServicesAsync();
+        }
+        catch
+        {
+            _categories = [];
+            _services = [];
+        }
+    }
+}

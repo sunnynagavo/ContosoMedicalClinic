@@ -1,0 +1,67 @@
+@page "/staff/payments"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Doctor,Staff")]
+@inject IPaymentService PaymentSvc
+@inject IInvoiceService InvoiceSvc
+@rendermode InteractiveServer
+
+<PageTitle>Payments - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-credit-card me-2"></i>Payment Management</h2>
+
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">All Invoices</h5>
+
+            @if (_invoices is null)
+            {
+                <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+            }
+            else if (_invoices.Count == 0)
+            {
+                <div class="alert alert-info">No invoices found.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-clinic table-hover">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Patient</th>
+                                <th>Date</th>
+                                <th>Total</th>
+                                <th>Balance Due</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var inv in _invoices)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@inv.InvoiceNumber</td>
+                                    <td>Patient #@inv.PatientId</td>
+                                    <td>@inv.InvoiceDate</td>
+                                    <td>@inv.TotalAmount.ToString("C")</td>
+                                    <td class="fw-bold @(inv.BalanceDue > 0 ? "text-danger" : "text-success")">@inv.BalanceDue.ToString("C")</td>
+                                    <td><span class="badge badge-@inv.Status.ToLower()">@inv.Status</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<InvoiceDto>? _invoices;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _invoices = await InvoiceSvc.GetInvoicesAsync(); }
+        catch { _invoices = []; }
+    }
+}

@@ -1,0 +1,142 @@
+@page "/staff/patients"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Doctor,Staff")]
+@page "/staff/patients/{PatientId:int}"
+@inject IPatientService PatientSvc
+@inject IMedicalRecordService MedRecordSvc
+@rendermode InteractiveServer
+
+<PageTitle>Patient Records - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-person-lines-fill me-2"></i>Patient Records</h2>
+
+        @if (PatientId == 0)
+        {
+            <!-- Patient List -->
+            @if (_patients is null)
+            {
+                <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-clinic table-hover">
+                        <thead>
+                            <tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>DOB</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in _patients)
+                            {
+                                <tr>
+                                    <td>@p.PatientId</td>
+                                    <td class="fw-bold">@p.FirstName @p.LastName</td>
+                                    <td>@p.Email</td>
+                                    <td>@p.Phone</td>
+                                    <td>@p.DateOfBirth</td>
+                                    <td><a href="/staff/patients/@p.PatientId" class="btn btn-sm btn-primary"><i class="bi bi-eye me-1"></i>View</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+        else
+        {
+            <!-- Patient Detail -->
+            <a href="/staff/patients" class="btn btn-outline-secondary mb-3"><i class="bi bi-arrow-left me-1"></i>Back to List</a>
+
+            @if (_selectedPatient is not null)
+            {
+                <div class="card p-4 mb-4">
+                    <h4 class="fw-bold">@_selectedPatient.FirstName @_selectedPatient.LastName</h4>
+                    <div class="row mt-3">
+                        <div class="col-md-4"><p><strong>Email:</strong> @_selectedPatient.Email</p></div>
+                        <div class="col-md-4"><p><strong>Phone:</strong> @_selectedPatient.Phone</p></div>
+                        <div class="col-md-4"><p><strong>DOB:</strong> @_selectedPatient.DateOfBirth</p></div>
+                        <div class="col-md-4"><p><strong>Gender:</strong> @_selectedPatient.Gender</p></div>
+                        <div class="col-md-8"><p><strong>Address:</strong> @_selectedPatient.Address, @_selectedPatient.City, @_selectedPatient.State @_selectedPatient.ZipCode</p></div>
+                    </div>
+                </div>
+
+                <!-- Medical Record -->
+                <div class="card p-4 mb-4">
+                    <h5 class="fw-bold"><i class="bi bi-file-medical text-primary me-2"></i>Medical Record</h5>
+                    @if (_medicalRecord is not null)
+                    {
+                        <div class="row mt-2">
+                            <div class="col-md-4"><p><strong>Blood Type:</strong> @_medicalRecord.BloodType</p></div>
+                            <div class="col-md-4"><p><strong>Allergies:</strong> @_medicalRecord.Allergies</p></div>
+                            <div class="col-md-4"><p><strong>Chronic Conditions:</strong> @_medicalRecord.ChronicConditions</p></div>
+                            <div class="col-md-6"><p><strong>Current Medications:</strong> @_medicalRecord.CurrentMedications</p></div>
+                            <div class="col-md-6"><p><strong>Family History:</strong> @_medicalRecord.FamilyHistory</p></div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No medical record on file.</p>
+                    }
+                </div>
+
+                <!-- Visit Notes -->
+                <div class="card p-4">
+                    <h5 class="fw-bold"><i class="bi bi-journal-medical text-primary me-2"></i>Visit Notes</h5>
+                    @if (_visitNotes.Count == 0)
+                    {
+                        <p class="text-muted">No visit notes.</p>
+                    }
+                    else
+                    {
+                        @foreach (var note in _visitNotes)
+                        {
+                            <div class="border-bottom py-2">
+                                <strong>Visit #@note.VisitNoteId</strong> — Appointment #@note.AppointmentId
+                                @if (!string.IsNullOrEmpty(note.Diagnosis))
+                                {
+                                    <br /><small><strong>Diagnosis:</strong> @note.Diagnosis</small>
+                                }
+                                @if (!string.IsNullOrEmpty(note.TreatmentPlan))
+                                {
+                                    <br /><small><strong>Treatment:</strong> @note.TreatmentPlan</small>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int PatientId { get; set; }
+
+    private List<PatientDto>? _patients;
+    private PatientDto? _selectedPatient;
+    private MedicalRecordDto? _medicalRecord;
+    private List<VisitNoteDto> _visitNotes = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            if (PatientId == 0)
+            {
+                _patients = await PatientSvc.GetPatientsAsync();
+            }
+            else
+            {
+                _selectedPatient = await PatientSvc.GetPatientAsync(PatientId);
+                _medicalRecord = await MedRecordSvc.GetRecordByPatientAsync(PatientId);
+                _visitNotes = await MedRecordSvc.GetVisitNotesByPatientAsync(PatientId);
+            }
+        }
+        catch
+        {
+            _patients = [];
+            _visitNotes = [];
+        }
+    }
+}

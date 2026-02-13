@@ -1,0 +1,103 @@
+@page "/staff/calendar"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Doctor,Staff")]
+@inject IAppointmentService AppointmentSvc
+@rendermode InteractiveServer
+
+<PageTitle>Appointment Calendar - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-calendar3 me-2"></i>Appointment Calendar</h2>
+
+        <div class="card p-4">
+            <!-- Date Filter -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Filter by Date</label>
+                        <input type="date" class="form-control" @bind="_filterDate" @bind:event="onchange" />
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-primary me-2" @onclick="LoadAppointments"><i class="bi bi-search me-1"></i>Filter</button>
+                    <button class="btn btn-outline-secondary" @onclick="ClearFilter"><i class="bi bi-x-circle me-1"></i>Clear</button>
+                </div>
+            </div>
+
+            @if (_appointments is null)
+            {
+                <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+            }
+            else if (_appointments.Count == 0)
+            {
+                <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>No appointments found for the selected criteria.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-clinic table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Patient</th>
+                                <th>Provider</th>
+                                <th>Service</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var apt in _appointments)
+                            {
+                                <tr>
+                                    <td>@apt.AppointmentId</td>
+                                    <td>@apt.AppointmentDate</td>
+                                    <td>@apt.StartTime - @apt.EndTime</td>
+                                    <td>Patient #@apt.PatientId</td>
+                                    <td>Provider #@apt.ProviderId</td>
+                                    <td>Service #@apt.ServiceId</td>
+                                    <td><span class="badge badge-@apt.Status.ToLower()">@apt.Status</span></td>
+                                    <td>
+                                        @if (apt.Status is "Scheduled" or "Confirmed")
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => Cancel(apt.AppointmentId)">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<AppointmentDto>? _appointments;
+    private DateOnly? _filterDate;
+
+    protected override async Task OnInitializedAsync() => await LoadAppointments();
+
+    private async Task LoadAppointments()
+    {
+        try
+        {
+            _appointments = !_filterDate.HasValue
+                ? await AppointmentSvc.GetAppointmentsAsync()
+                : await AppointmentSvc.GetAppointmentsByDateAsync(_filterDate.Value.ToString("yyyy-MM-dd"));
+        }
+        catch { _appointments = []; }
+    }
+
+    private async Task ClearFilter() { _filterDate = null; await LoadAppointments(); }
+
+    private async Task Cancel(int id)
+    {
+        try { await AppointmentSvc.CancelAppointmentAsync(id, "Cancelled by staff"); await LoadAppointments(); }
+        catch { /* Handle error */ }
+    }
+}

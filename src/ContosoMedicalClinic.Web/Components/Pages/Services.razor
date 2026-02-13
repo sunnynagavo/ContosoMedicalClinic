@@ -1,0 +1,91 @@
+@page "/services"
+@inject IServiceCatalogService ServiceCatalog
+@rendermode InteractiveServer
+
+<PageTitle>Services - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4">Our Services</h2>
+
+        @if (_categories is null)
+        {
+            <div class="loading-spinner"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>
+        }
+        else
+        {
+            @foreach (var category in _categories)
+            {
+                var catId = category.CategoryId;
+                var isExpanded = _expandedCategories.Contains(catId);
+                <div class="mb-3">
+                    <div class="card">
+                        <div class="card-header bg-white d-flex align-items-center justify-content-between py-3"
+                             style="cursor:pointer;" @onclick="() => ToggleCategory(catId)">
+                            <h5 class="fw-bold text-primary mb-0">
+                                <i class="bi @(isExpanded ? "bi-chevron-down" : "bi-chevron-right") me-2"></i>@category.Name
+                            </h5>
+                            <span class="badge bg-primary rounded-pill">@_services.Count(s => s.CategoryId == catId)</span>
+                        </div>
+                        @if (isExpanded)
+                        {
+                            <div class="card-body pt-2">
+                                @if (!string.IsNullOrEmpty(category.Description))
+                                {
+                                    <p class="text-muted mb-3">@category.Description</p>
+                                }
+                                <div class="row g-3">
+                                    @foreach (var svc in _services.Where(s => s.CategoryId == catId))
+                                    {
+                                        <div class="col-md-6 col-lg-4">
+                                            <div class="card p-3 h-100 border">
+                                                <h6 class="fw-bold mb-1">@svc.Name</h6>
+                                                @if (!string.IsNullOrEmpty(svc.Description))
+                                                {
+                                                    <p class="text-muted small mb-2">@svc.Description</p>
+                                                }
+                                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                                    <span class="text-muted small"><i class="bi bi-clock me-1"></i>@svc.DefaultDurationMinutes min</span>
+                                                    <span class="fw-bold text-primary">@svc.DefaultPrice.ToString("C")</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<ServiceCategoryDto>? _categories;
+    private List<ServiceDto> _services = [];
+    private HashSet<int> _expandedCategories = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _categories = await ServiceCatalog.GetCategoriesAsync();
+            _services = await ServiceCatalog.GetServicesAsync();
+            // Expand first category by default
+            if (_categories?.Count > 0)
+                _expandedCategories.Add(_categories[0].CategoryId);
+        }
+        catch
+        {
+            _categories = [];
+            _services = [];
+        }
+    }
+
+    private void ToggleCategory(int categoryId)
+    {
+        if (!_expandedCategories.Remove(categoryId))
+            _expandedCategories.Add(categoryId);
+    }
+}

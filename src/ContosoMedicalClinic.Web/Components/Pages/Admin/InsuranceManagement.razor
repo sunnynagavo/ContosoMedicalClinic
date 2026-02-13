@@ -1,0 +1,106 @@
+@page "/admin/insurance"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject IInsuranceService InsuranceSvc
+@rendermode InteractiveServer
+
+<PageTitle>Insurance Management - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-shield-check me-2"></i>Insurance Management</h2>
+
+        <!-- Insurance Providers -->
+        <div class="card p-4 mb-4">
+            <h5 class="fw-bold mb-3">Insurance Providers</h5>
+            @if (_providers is null)
+            {
+                <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+            }
+            else if (_providers.Count == 0)
+            {
+                <div class="alert alert-info">No insurance providers configured.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-clinic table-hover">
+                        <thead>
+                            <tr><th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Website</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in _providers)
+                            {
+                                <tr>
+                                    <td>@p.InsuranceProviderId</td>
+                                    <td class="fw-bold">@p.Name</td>
+                                    <td>@p.ContactPhone</td>
+                                    <td>@p.ContactEmail</td>
+                                    <td>@p.Website</td>
+                                    <td>
+                                        @if (p.IsActive) { <span class="badge bg-success">Active</span> }
+                                        else { <span class="badge bg-secondary">Inactive</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <!-- Claims -->
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">Insurance Claims</h5>
+            @if (_claims is null)
+            {
+                <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+            }
+            else if (_claims.Count == 0)
+            {
+                <div class="alert alert-info">No claims found.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-clinic table-hover">
+                        <thead>
+                            <tr><th>Claim #</th><th>Submission</th><th>Claimed</th><th>Approved</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in _claims)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@c.ClaimNumber</td>
+                                    <td>@c.SubmissionDate</td>
+                                    <td>@c.ClaimedAmount.ToString("C")</td>
+                                    <td>@(c.ApprovedAmount?.ToString("C") ?? "—")</td>
+                                    <td><span class="badge bg-info">@c.Status</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<InsuranceProviderDto>? _providers;
+    private List<InsuranceClaimDto>? _claims;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _providers = await InsuranceSvc.GetInsuranceProvidersAsync();
+            _claims = await InsuranceSvc.GetClaimsAsync();
+        }
+        catch
+        {
+            _providers = [];
+            _claims = [];
+        }
+    }
+}

@@ -1,0 +1,21 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.0.0">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ContosoMedicalClinic.Web\ContosoMedicalClinic.Web.csproj" />
+    <ProjectReference Include="..\ContosoMedicalClinic.DbInitializer\ContosoMedicalClinic.DbInitializer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.1.1" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Azure.DataApiBuilder" Version="13.1.1" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>71dd7987-2f74-4327-99ce-700407b40c7b</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

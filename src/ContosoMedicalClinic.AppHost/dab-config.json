@@ -1,0 +1,152 @@
+{
+  "$schema": "https://dataapibuilder.azureedge.net/schemas/v1.2.10/dab.draft.schema.json",
+  "data-source": {
+    "database-type": "mssql",
+    "connection-string": "@env('ConnectionStrings__ContosoMedicalClinicDb')"
+  },
+  "runtime": {
+    "rest": {
+      "path": "/api",
+      "enabled": true
+    },
+    "graphql": {
+      "path": "/graphql",
+      "enabled": true
+    },
+    "host": {
+      "cors": {
+        "origins": ["*"],
+        "allow-credentials": false
+      },
+      "authentication": {
+        "provider": "StaticWebApps"
+      },
+      "mode": "development"
+    }
+  },
+  "entities": {
+    "Patient": {
+      "source": "dbo.Patients",
+      "rest": { "path": "/Patient" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    },
+    "ServiceCategory": {
+      "source": "dbo.ServiceCategories",
+      "rest": { "path": "/ServiceCategory" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update", "delete"] }
+      ]
+    },
+    "Service": {
+      "source": "dbo.Services",
+      "rest": { "path": "/Service" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update", "delete"] }
+      ]
+    },
+    "Staff": {
+      "source": "dbo.Staff",
+      "rest": { "path": "/Staff" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    },
+    "Provider": {
+      "source": "dbo.Providers",
+      "rest": { "path": "/Provider" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    },
+    "Appointment": {
+      "source": "dbo.Appointments",
+      "rest": { "path": "/Appointment" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update", "delete"] }
+      ]
+    },
+    "MedicalRecord": {
+      "source": "dbo.MedicalRecords",
+      "rest": { "path": "/MedicalRecord" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    },
+    "VisitNote": {
+      "source": "dbo.VisitNotes",
+      "rest": { "path": "/VisitNote" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    },
+    "Invoice": {
+      "source": "dbo.Invoices",
+      "rest": { "path": "/Invoice" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    },
+    "InvoiceLineItem": {
+      "source": "dbo.InvoiceLineItems",
+      "rest": { "path": "/InvoiceLineItem" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update", "delete"] }
+      ]
+    },
+    "Payment": {
+      "source": "dbo.Payments",
+      "rest": { "path": "/Payment" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create"] }
+      ]
+    },
+    "InsuranceProvider": {
+      "source": "dbo.InsuranceProviders",
+      "rest": { "path": "/InsuranceProvider" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    },
+    "PatientInsurance": {
+      "source": "dbo.PatientInsurance",
+      "rest": { "path": "/PatientInsurance" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    },
+    "InsuranceClaim": {
+      "source": "dbo.InsuranceClaims",
+      "rest": { "path": "/InsuranceClaim" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    },
+    "Shift": {
+      "source": "dbo.Shifts",
+      "rest": { "path": "/Shift" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update", "delete"] }
+      ]
+    },
+    "ProviderDetails": {
+      "source": {
+        "object": "dbo.vw_ProviderDetails",
+        "type": "view",
+        "key-fields": ["ProviderId"]
+      },
+      "rest": { "path": "/ProviderDetails" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read"] }
+      ]
+    },
+    "UserAccount": {
+      "source": "dbo.UserAccounts",
+      "rest": { "path": "/UserAccount" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read", "create", "update"] }
+      ]
+    }
+  }
+}

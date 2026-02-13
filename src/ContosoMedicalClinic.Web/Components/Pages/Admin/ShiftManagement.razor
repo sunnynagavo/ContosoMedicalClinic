@@ -1,0 +1,81 @@
+@page "/admin/shifts"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject IStaffService StaffSvc
+@rendermode InteractiveServer
+
+<PageTitle>Shift Management - Contoso Medical Clinic</PageTitle>
+
+<div class="page-content">
+    <div class="container">
+        <h2 class="section-title mb-4"><i class="bi bi-clock-history me-2"></i>Shift Management</h2>
+
+        @if (_shifts is null)
+        {
+            <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        }
+        else
+        {
+            <div class="card p-4">
+                @if (_shifts.Count == 0)
+                {
+                    <div class="alert alert-info">No shifts scheduled.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-clinic table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Staff</th>
+                                    <th>Date</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Type</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var shift in _shifts)
+                                {
+                                    <tr>
+                                        <td>@shift.ShiftId</td>
+                                        <td class="fw-bold">Staff #@shift.StaffId</td>
+                                        <td>@shift.ShiftDate</td>
+                                        <td>@shift.StartTime</td>
+                                        <td>@shift.EndTime</td>
+                                        <td><span class="badge bg-info">@shift.ShiftType</span></td>
+                                        <td>@shift.Notes</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteShift(shift.ShiftId)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<ShiftDto>? _shifts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _shifts = await StaffSvc.GetShiftsAsync(); }
+        catch { _shifts = []; }
+    }
+
+    private async Task DeleteShift(int shiftId)
+    {
+        try { await StaffSvc.DeleteShiftAsync(shiftId); _shifts = await StaffSvc.GetShiftsAsync(); }
+        catch { /* Handle error */ }
+    }
+}
