@@ -56,6 +56,7 @@ body {
 .badge-confirmed { background-color: var(--cmc-accent); }
 .badge-completed { background-color: var(--cmc-success); }
 .badge-cancelled { background-color: #A0AEC0; }
+.badge-noshow { background-color: #805AD5; }
 .badge-paid { background-color: var(--cmc-success); }
 .badge-pending, .badge-sent { background-color: var(--cmc-warning); color: var(--cmc-dark); }
 .badge-overdue { background-color: var(--cmc-danger); }

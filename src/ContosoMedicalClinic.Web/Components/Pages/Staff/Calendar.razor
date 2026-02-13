@@ -2,6 +2,9 @@
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Doctor,Staff")]
 @inject IAppointmentService AppointmentSvc
+@inject IPatientService PatientSvc
+@inject IProviderService ProviderSvc
+@inject IServiceCatalogService ServiceCatalogSvc
 @rendermode InteractiveServer
 
 <PageTitle>Appointment Calendar - Contoso Medical Clinic</PageTitle>
@@ -11,30 +14,55 @@
         <h2 class="section-title mb-4"><i class="bi bi-calendar3 me-2"></i>Appointment Calendar</h2>
 
         <div class="card p-4">
-            <!-- Date Filter -->
+            <!-- Filters -->
             <div class="row g-3 mb-4">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-bold">Filter by Date</label>
-                        <input type="date" class="form-control" @bind="_filterDate" @bind:event="onchange" />
+                    <input type="date" class="form-control" @bind="_filterDate" @bind:event="onchange" />
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button class="btn btn-primary me-2" @onclick="LoadAppointments"><i class="bi bi-search me-1"></i>Filter</button>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Filter by Status</label>
+                    <select class="form-select" @bind="_filterStatus">
+                        <option value="">All Statuses</option>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                        <option value="NoShow">No Show</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button class="btn btn-primary" @onclick="LoadAppointments"><i class="bi bi-search me-1"></i>Filter</button>
                     <button class="btn btn-outline-secondary" @onclick="ClearFilter"><i class="bi bi-x-circle me-1"></i>Clear</button>
                 </div>
             </div>
+
+            @if (!string.IsNullOrEmpty(_statusMessage))
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="bi bi-check-circle me-2"></i>@_statusMessage
+                    <button type="button" class="btn-close" @onclick='() => _statusMessage = null'></button>
+                </div>
+            }
 
             @if (_appointments is null)
             {
                 <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
             }
-            else if (_appointments.Count == 0)
+            else if (_filteredAppointments.Count == 0)
             {
                 <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>No appointments found for the selected criteria.</div>
             }
             else
             {
+                <div class="mb-3 d-flex gap-3 small">
+                    <span><span class="badge badge-scheduled">&nbsp;</span> Scheduled: @_filteredAppointments.Count(a => a.Status == "Scheduled")</span>
+                    <span><span class="badge badge-confirmed">&nbsp;</span> Confirmed: @_filteredAppointments.Count(a => a.Status == "Confirmed")</span>
+                    <span><span class="badge badge-completed">&nbsp;</span> Completed: @_filteredAppointments.Count(a => a.Status == "Completed")</span>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-clinic table-hover">
+                    <table class="table table-clinic table-hover align-middle">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -44,27 +72,48 @@
                                 <th>Provider</th>
                                 <th>Service</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var apt in _appointments)
+                            @foreach (var apt in _filteredAppointments)
                             {
                                 <tr>
-                                    <td>@apt.AppointmentId</td>
+                                    <td><strong>#@apt.AppointmentId</strong></td>
                                     <td>@apt.AppointmentDate</td>
-                                    <td>@apt.StartTime - @apt.EndTime</td>
-                                    <td>Patient #@apt.PatientId</td>
-                                    <td>Provider #@apt.ProviderId</td>
-                                    <td>Service #@apt.ServiceId</td>
+                                    <td>@apt.StartTime – @apt.EndTime</td>
+                                    <td>@GetPatientName(apt.PatientId)</td>
+                                    <td>@GetProviderName(apt.ProviderId)</td>
+                                    <td>@GetServiceName(apt.ServiceId)</td>
                                     <td><span class="badge badge-@apt.Status.ToLower()">@apt.Status</span></td>
-                                    <td>
-                                        @if (apt.Status is "Scheduled" or "Confirmed")
-                                        {
-                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => Cancel(apt.AppointmentId)">
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-                                        }
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            @if (apt.Status == "Scheduled")
+                                            {
+                                                <button class="btn btn-success" title="Confirm" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "Confirmed")">
+                                                    <i class="bi bi-check-lg"></i> Confirm
+                                                </button>
+                                                <button class="btn btn-outline-danger" title="Cancel" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "Cancelled")">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            }
+                                            else if (apt.Status == "Confirmed")
+                                            {
+                                                <button class="btn btn-primary" title="Mark Completed" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "Completed")">
+                                                    <i class="bi bi-check-circle"></i> Complete
+                                                </button>
+                                                <button class="btn btn-outline-warning" title="No Show" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "NoShow")">
+                                                    <i class="bi bi-person-x"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" title="Cancel" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "Cancelled")">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">—</span>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -78,9 +127,40 @@
 
 @code {
     private List<AppointmentDto>? _appointments;
+    private Dictionary<int, string> _patientNames = new();
+    private Dictionary<int, string> _providerNames = new();
+    private Dictionary<int, string> _serviceNames = new();
     private DateOnly? _filterDate;
+    private string _filterStatus = "";
+    private string? _statusMessage;
 
-    protected override async Task OnInitializedAsync() => await LoadAppointments();
+    private List<AppointmentDto> _filteredAppointments =>
+        (_appointments ?? [])
+            .Where(a => string.IsNullOrEmpty(_filterStatus) || a.Status == _filterStatus)
+            .OrderBy(a => a.AppointmentDate).ThenBy(a => a.StartTime)
+            .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadLookups(), LoadAppointments());
+    }
+
+    private async Task LoadLookups()
+    {
+        try
+        {
+            var patients = await PatientSvc.GetPatientsAsync();
+            _patientNames = patients.ToDictionary(p => p.PatientId, p => $"{p.FirstName} {p.LastName}");
+
+            var providers = await ProviderSvc.GetProvidersAsync();
+            _providerNames = providers.ToDictionary(p => p.ProviderId,
+                p => $"{p.Title ?? "Dr."} {p.FirstName ?? ""} {p.LastName ?? $"#{p.ProviderId}"}".Trim());
+
+            var services = await ServiceCatalogSvc.GetServicesAsync();
+            _serviceNames = services.ToDictionary(s => s.ServiceId, s => s.Name);
+        }
+        catch { }
+    }
 
     private async Task LoadAppointments()
     {
@@ -93,11 +173,21 @@
         catch { _appointments = []; }
     }
 
-    private async Task ClearFilter() { _filterDate = null; await LoadAppointments(); }
+    private string GetPatientName(int id) => _patientNames.TryGetValue(id, out var n) ? n : $"Patient #{id}";
+    private string GetProviderName(int id) => _providerNames.TryGetValue(id, out var n) ? n : $"Provider #{id}";
+    private string GetServiceName(int id) => _serviceNames.TryGetValue(id, out var n) ? n : $"Service #{id}";
 
-    private async Task Cancel(int id)
+    private async Task ClearFilter() { _filterDate = null; _filterStatus = ""; await LoadAppointments(); }
+
+    private async Task UpdateStatus(int id, AppointmentDto apt, string newStatus)
     {
-        try { await AppointmentSvc.CancelAppointmentAsync(id, "Cancelled by staff"); await LoadAppointments(); }
-        catch { /* Handle error */ }
+        try
+        {
+            var reason = newStatus == "Cancelled" ? "Cancelled by staff" : null;
+            await AppointmentSvc.UpdateAppointmentAsync(id, apt with { Status = newStatus, CancellationReason = reason });
+            _statusMessage = $"Appointment #{id} updated to {newStatus}";
+            await LoadAppointments();
+        }
+        catch (Exception ex) { _statusMessage = $"Error: {ex.Message}"; }
     }
 }
