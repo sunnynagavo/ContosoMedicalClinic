@@ -90,22 +90,22 @@
                                         <div class="btn-group btn-group-sm">
                                             @if (apt.Status == "Scheduled")
                                             {
-                                                <button class="btn btn-success" title="Confirm" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "Confirmed")">
+                                                <button class="btn btn-success" title="Confirm" @onclick='() => UpdateStatus(apt.AppointmentId, apt, "Confirmed")'>
                                                     <i class="bi bi-check-lg"></i> Confirm
                                                 </button>
-                                                <button class="btn btn-outline-danger" title="Cancel" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "Cancelled")">
+                                                <button class="btn btn-outline-danger" title="Cancel" @onclick='() => UpdateStatus(apt.AppointmentId, apt, "Cancelled")'>
                                                     <i class="bi bi-x-lg"></i>
                                                 </button>
                                             }
                                             else if (apt.Status == "Confirmed")
                                             {
-                                                <button class="btn btn-primary" title="Mark Completed" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "Completed")">
+                                                <button class="btn btn-primary" title="Mark Completed" @onclick='() => UpdateStatus(apt.AppointmentId, apt, "Completed")'>
                                                     <i class="bi bi-check-circle"></i> Complete
                                                 </button>
-                                                <button class="btn btn-outline-warning" title="No Show" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "NoShow")">
+                                                <button class="btn btn-outline-warning" title="No Show" @onclick='() => UpdateStatus(apt.AppointmentId, apt, "NoShow")'>
                                                     <i class="bi bi-person-x"></i>
                                                 </button>
-                                                <button class="btn btn-outline-danger" title="Cancel" @onclick="() => UpdateStatus(apt.AppointmentId, apt, "Cancelled")">
+                                                <button class="btn btn-outline-danger" title="Cancel" @onclick='() => UpdateStatus(apt.AppointmentId, apt, "Cancelled")'>
                                                     <i class="bi bi-x-lg"></i>
                                                 </button>
                                             }
