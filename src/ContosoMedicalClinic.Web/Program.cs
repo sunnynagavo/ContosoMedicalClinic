@@ -45,26 +45,29 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 // Auth endpoints — cookies must be set via HTTP, not SignalR
-app.MapGet("/api/auth/login", async (HttpContext ctx, string email, string name, string role,
-    int? patientId, int? staffId) =>
+app.MapGet("/api/auth/login", async (HttpContext ctx) =>
 {
+    var q = ctx.Request.Query;
+    var email = q["email"].ToString();
+    var name = q["name"].ToString();
+    var role = q["role"].ToString();
+
     var claims = new List<Claim>
     {
         new(ClaimTypes.Email, email),
         new(ClaimTypes.Name, name),
         new(ClaimTypes.Role, role),
     };
-    if (patientId.HasValue)
-        claims.Add(new Claim("PatientId", patientId.Value.ToString()));
-    if (staffId.HasValue)
-        claims.Add(new Claim("StaffId", staffId.Value.ToString()));
+    if (int.TryParse(q["patientId"], out var patientId))
+        claims.Add(new Claim("PatientId", patientId.ToString()));
+    if (int.TryParse(q["staffId"], out var staffId))
+        claims.Add(new Claim("StaffId", staffId.ToString()));
 
     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
     var principal = new ClaimsPrincipal(identity);
 
     await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-    // Redirect based on role
     var redirect = role switch
     {
         "Patient" => "/patient/dashboard",
