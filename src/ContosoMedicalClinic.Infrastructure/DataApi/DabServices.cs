@@ -15,16 +15,16 @@ public class ServiceCatalogService(DabHttpClient dab) : IServiceCatalogService
         await dab.GetListAsync<ServiceDto>("Service", $"CategoryId eq {categoryId}");
 
     public async Task<ServiceDto?> GetServiceAsync(int serviceId) =>
-        await dab.GetByIdAsync<ServiceDto>("Service", serviceId);
+        await dab.GetByIdAsync<ServiceDto>("Service", serviceId, "ServiceId");
 
     public async Task<ServiceDto> CreateServiceAsync(ServiceDto service) =>
         await dab.CreateAsync<ServiceDto>("Service", service);
 
     public async Task<ServiceDto> UpdateServiceAsync(int serviceId, ServiceDto service) =>
-        await dab.UpdateAsync<ServiceDto>("Service", serviceId, service);
+        await dab.UpdateAsync<ServiceDto>("Service", serviceId, service, "ServiceId");
 
     public async Task DeleteServiceAsync(int serviceId) =>
-        await dab.DeleteAsync("Service", serviceId);
+        await dab.DeleteAsync("Service", serviceId, "ServiceId");
 }
 
 public class AppointmentService(DabHttpClient dab) : IAppointmentService
@@ -42,7 +42,7 @@ public class AppointmentService(DabHttpClient dab) : IAppointmentService
         await dab.GetListAsync<AppointmentDto>("Appointment", $"AppointmentDate eq {date}");
 
     public async Task<AppointmentDto?> GetAppointmentAsync(int appointmentId) =>
-        await dab.GetByIdAsync<AppointmentDto>("Appointment", appointmentId);
+        await dab.GetByIdAsync<AppointmentDto>("Appointment", appointmentId, "AppointmentId");
 
     public async Task<AppointmentDto> CreateAppointmentAsync(CreateAppointmentDto appointment) =>
         await dab.CreateAsync<AppointmentDto>("Appointment", appointment);
@@ -59,15 +59,15 @@ public class AppointmentService(DabHttpClient dab) : IAppointmentService
             appointment.Status,
             appointment.Notes,
             appointment.CancellationReason
-        });
+        }, "AppointmentId");
 
     public async Task UpdateStatusAsync(int appointmentId, string status) =>
         await dab.UpdateAsync<AppointmentDto>("Appointment", appointmentId,
-            new { Status = status });
+            new { Status = status }, "AppointmentId");
 
     public async Task CancelAppointmentAsync(int appointmentId, string? reason) =>
         await dab.UpdateAsync<AppointmentDto>("Appointment", appointmentId,
-            new { Status = "Cancelled", CancellationReason = reason });
+            new { Status = "Cancelled", CancellationReason = reason }, "AppointmentId");
 }
 
 public class PatientService(DabHttpClient dab) : IPatientService
@@ -76,13 +76,13 @@ public class PatientService(DabHttpClient dab) : IPatientService
         await dab.GetListAsync<PatientDto>("Patient");
 
     public async Task<PatientDto?> GetPatientAsync(int patientId) =>
-        await dab.GetByIdAsync<PatientDto>("Patient", patientId);
+        await dab.GetByIdAsync<PatientDto>("Patient", patientId, "PatientId");
 
     public async Task<PatientDto> CreatePatientAsync(PatientDto patient) =>
         await dab.CreateAsync<PatientDto>("Patient", patient);
 
     public async Task<PatientDto> UpdatePatientAsync(int patientId, PatientDto patient) =>
-        await dab.UpdateAsync<PatientDto>("Patient", patientId, patient);
+        await dab.UpdateAsync<PatientDto>("Patient", patientId, patient, "PatientId");
 }
 
 public class ProviderService(DabHttpClient dab) : IProviderService
@@ -91,7 +91,7 @@ public class ProviderService(DabHttpClient dab) : IProviderService
         await dab.GetListAsync<ProviderDto>("ProviderDetails");
 
     public async Task<ProviderDto?> GetProviderAsync(int providerId) =>
-        await dab.GetByIdAsync<ProviderDto>("ProviderDetails", providerId);
+        await dab.GetByIdAsync<ProviderDto>("ProviderDetails", providerId, "ProviderId");
 
     public async Task<List<ProviderDto>> GetProvidersByServiceAsync(int serviceId) =>
         await dab.GetListAsync<ProviderDto>("ProviderDetails"); // Filter client-side for now
@@ -106,7 +106,7 @@ public class InvoiceService(DabHttpClient dab) : IInvoiceService
         await dab.GetListAsync<InvoiceDto>("Invoice", $"PatientId eq {patientId}");
 
     public async Task<InvoiceDto?> GetInvoiceAsync(int invoiceId) =>
-        await dab.GetByIdAsync<InvoiceDto>("Invoice", invoiceId);
+        await dab.GetByIdAsync<InvoiceDto>("Invoice", invoiceId, "InvoiceId");
 
     public async Task<List<InvoiceLineItemDto>> GetInvoiceLineItemsAsync(int invoiceId) =>
         await dab.GetListAsync<InvoiceLineItemDto>("InvoiceLineItem", $"InvoiceId eq {invoiceId}");
@@ -115,7 +115,7 @@ public class InvoiceService(DabHttpClient dab) : IInvoiceService
         await dab.CreateAsync<InvoiceDto>("Invoice", invoice);
 
     public async Task<InvoiceDto> UpdateInvoiceAsync(int invoiceId, InvoiceDto invoice) =>
-        await dab.UpdateAsync<InvoiceDto>("Invoice", invoiceId, invoice);
+        await dab.UpdateAsync<InvoiceDto>("Invoice", invoiceId, invoice, "InvoiceId");
 }
 
 public class PaymentService(DabHttpClient dab) : IPaymentService
@@ -142,7 +142,7 @@ public class MedicalRecordService(DabHttpClient dab) : IMedicalRecordService
     {
         var existing = await GetRecordByPatientAsync(record.PatientId);
         if (existing is not null)
-            return await dab.UpdateAsync<MedicalRecordDto>("MedicalRecord", existing.RecordId, record);
+            return await dab.UpdateAsync<MedicalRecordDto>("MedicalRecord", existing.RecordId, record, "RecordId");
         return await dab.CreateAsync<MedicalRecordDto>("MedicalRecord", record);
     }
 
@@ -159,13 +159,13 @@ public class StaffService(DabHttpClient dab) : IStaffService
         await dab.GetListAsync<StaffDto>("Staff");
 
     public async Task<StaffDto?> GetStaffMemberAsync(int staffId) =>
-        await dab.GetByIdAsync<StaffDto>("Staff", staffId);
+        await dab.GetByIdAsync<StaffDto>("Staff", staffId, "StaffId");
 
     public async Task<StaffDto> CreateStaffAsync(StaffDto staff) =>
         await dab.CreateAsync<StaffDto>("Staff", staff);
 
     public async Task<StaffDto> UpdateStaffAsync(int staffId, StaffDto staff) =>
-        await dab.UpdateAsync<StaffDto>("Staff", staffId, staff);
+        await dab.UpdateAsync<StaffDto>("Staff", staffId, staff, "StaffId");
 
     public async Task<List<ShiftDto>> GetShiftsAsync() =>
         await dab.GetListAsync<ShiftDto>("Shift");
@@ -177,10 +177,10 @@ public class StaffService(DabHttpClient dab) : IStaffService
         await dab.CreateAsync<ShiftDto>("Shift", shift);
 
     public async Task<ShiftDto> UpdateShiftAsync(int shiftId, ShiftDto shift) =>
-        await dab.UpdateAsync<ShiftDto>("Shift", shiftId, shift);
+        await dab.UpdateAsync<ShiftDto>("Shift", shiftId, shift, "ShiftId");
 
     public async Task DeleteShiftAsync(int shiftId) =>
-        await dab.DeleteAsync("Shift", shiftId);
+        await dab.DeleteAsync("Shift", shiftId, "ShiftId");
 }
 
 public class InsuranceService(DabHttpClient dab) : IInsuranceService
@@ -192,7 +192,7 @@ public class InsuranceService(DabHttpClient dab) : IInsuranceService
         await dab.CreateAsync<InsuranceProviderDto>("InsuranceProvider", provider);
 
     public async Task<InsuranceProviderDto> UpdateInsuranceProviderAsync(int id, InsuranceProviderDto provider) =>
-        await dab.UpdateAsync<InsuranceProviderDto>("InsuranceProvider", id, provider);
+        await dab.UpdateAsync<InsuranceProviderDto>("InsuranceProvider", id, provider, "InsuranceProviderId");
 
     public async Task<List<PatientInsuranceDto>> GetPatientInsuranceAsync(int patientId) =>
         await dab.GetListAsync<PatientInsuranceDto>("PatientInsurance", $"PatientId eq {patientId}");
@@ -204,7 +204,7 @@ public class InsuranceService(DabHttpClient dab) : IInsuranceService
         await dab.CreateAsync<InsuranceClaimDto>("InsuranceClaim", claim);
 
     public async Task<InsuranceClaimDto> UpdateClaimAsync(int claimId, InsuranceClaimDto claim) =>
-        await dab.UpdateAsync<InsuranceClaimDto>("InsuranceClaim", claimId, claim);
+        await dab.UpdateAsync<InsuranceClaimDto>("InsuranceClaim", claimId, claim, "ClaimId");
 }
 
 public class AuthService(DabHttpClient dab) : IAuthService

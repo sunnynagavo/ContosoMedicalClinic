@@ -1,7 +1,10 @@
 @page "/patient/appointments"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @attribute [Authorize(Roles = "Patient")]
 @inject IAppointmentService AppointmentSvc
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>My Appointments - Contoso Medical Clinic</PageTitle>
@@ -12,6 +15,11 @@
             <h2 class="section-title mb-0"><i class="bi bi-calendar-check me-2"></i>My Appointments</h2>
             <a href="/patient/appointments/book" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Book New</a>
         </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@_errorMessage</div>
+        }
 
         @if (_appointments is null)
         {
@@ -61,21 +69,37 @@
 
 @code {
     private List<AppointmentDto>? _appointments;
-    private const int DemoPatientId = 1;
+    private int _patientId;
+    private string? _errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        try { _appointments = await AppointmentSvc.GetAppointmentsByPatientAsync(DemoPatientId); }
-        catch { _appointments = []; }
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var patientIdClaim = authState.User.FindFirst("PatientId")?.Value;
+            _patientId = int.TryParse(patientIdClaim, out var pid) ? pid : 1;
+
+            _appointments = await AppointmentSvc.GetAppointmentsByPatientAsync(_patientId);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to load appointments: {ex.Message}";
+            _appointments = [];
+        }
     }
 
     private async Task CancelAppointment(int id)
     {
         try
         {
+            _errorMessage = null;
             await AppointmentSvc.CancelAppointmentAsync(id, "Cancelled by patient");
-            _appointments = await AppointmentSvc.GetAppointmentsByPatientAsync(DemoPatientId);
+            _appointments = await AppointmentSvc.GetAppointmentsByPatientAsync(_patientId);
         }
-        catch { /* Handle error */ }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to cancel appointment: {ex.Message}";
+        }
     }
 }

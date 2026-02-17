@@ -183,6 +183,7 @@
     {
         try
         {
+            _statusMessage = null;
             if (newStatus == "Cancelled")
             {
                 await AppointmentSvc.CancelAppointmentAsync(id, "Cancelled by staff");
@@ -193,7 +194,8 @@
             }
             _statusMessage = $"Appointment #{id} updated to {newStatus}";
             await LoadAppointments();
+            StateHasChanged();
         }
-        catch (Exception ex) { _statusMessage = $"Error: {ex.Message}"; }
+        catch (Exception ex) { _statusMessage = $"Error updating appointment #{id}: {ex.Message}"; }
     }
 }

@@ -24,9 +24,9 @@ public class DabHttpClient(HttpClient httpClient)
         return response?.Value ?? [];
     }
 
-    public async Task<T?> GetByIdAsync<T>(string entity, int id)
+    public async Task<T?> GetByIdAsync<T>(string entity, int id, string pkColumn = "Id")
     {
-        var url = $"/api/{entity}/Id/{id}";
+        var url = $"/api/{entity}/{pkColumn}/{id}";
         try
         {
             return await httpClient.GetFromJsonAsync<T>(url, JsonOptions);
@@ -44,16 +44,16 @@ public class DabHttpClient(HttpClient httpClient)
         return (await response.Content.ReadFromJsonAsync<T>(JsonOptions))!;
     }
 
-    public async Task<T> UpdateAsync<T>(string entity, int id, object data)
+    public async Task<T> UpdateAsync<T>(string entity, int id, object data, string pkColumn = "Id")
     {
-        var response = await httpClient.PatchAsJsonAsync($"/api/{entity}/Id/{id}", data, JsonOptions);
+        var response = await httpClient.PatchAsJsonAsync($"/api/{entity}/{pkColumn}/{id}", data, JsonOptions);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<T>(JsonOptions))!;
     }
 
-    public async Task DeleteAsync(string entity, int id)
+    public async Task DeleteAsync(string entity, int id, string pkColumn = "Id")
     {
-        var response = await httpClient.DeleteAsync($"/api/{entity}/Id/{id}");
+        var response = await httpClient.DeleteAsync($"/api/{entity}/{pkColumn}/{id}");
         response.EnsureSuccessStatusCode();
     }
 
