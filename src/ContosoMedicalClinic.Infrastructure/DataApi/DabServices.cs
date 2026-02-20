@@ -72,6 +72,10 @@ public class AppointmentService(DabHttpClient dab) : IAppointmentService
     public async Task RescheduleAsync(int appointmentId, string newDate, string newStartTime, string newEndTime) =>
         await dab.UpdateAsync<AppointmentDto>("Appointment", appointmentId,
             new { AppointmentDate = newDate, StartTime = newStartTime, EndTime = newEndTime, Status = "Scheduled" }, "AppointmentId");
+
+    public async Task ResumeAppointmentAsync(int appointmentId) =>
+        await dab.UpdateAsync<AppointmentDto>("Appointment", appointmentId,
+            new { Status = "Scheduled", CancellationReason = (string?)null }, "AppointmentId");
 }
 
 public class PatientService(DabHttpClient dab) : IPatientService

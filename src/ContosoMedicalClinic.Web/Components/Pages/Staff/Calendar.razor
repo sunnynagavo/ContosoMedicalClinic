@@ -115,6 +115,12 @@
                                                     <i class="bi bi-x-lg"></i>
                                                 </button>
                                             }
+                                            else if (apt.Status == "Cancelled" || apt.Status == "NoShow")
+                                            {
+                                                <button class="btn btn-outline-success" title="Resume" @onclick="() => ResumeAppointment(apt.AppointmentId)">
+                                                    <i class="bi bi-arrow-counterclockwise"></i> Resume
+                                                </button>
+                                            }
                                             else
                                             {
                                                 <span class="text-muted small">—</span>
@@ -252,6 +258,19 @@
             StateHasChanged();
         }
         catch (Exception ex) { _statusMessage = $"Error updating appointment #{id}: {ex.Message}"; }
+    }
+
+    private async Task ResumeAppointment(int id)
+    {
+        try
+        {
+            _statusMessage = null;
+            await AppointmentSvc.ResumeAppointmentAsync(id);
+            _statusMessage = $"Appointment #{id} has been resumed to Scheduled.";
+            await LoadAppointments();
+            StateHasChanged();
+        }
+        catch (Exception ex) { _statusMessage = $"Error resuming appointment #{id}: {ex.Message}"; }
     }
 
     private void OpenReschedule(AppointmentDto apt)

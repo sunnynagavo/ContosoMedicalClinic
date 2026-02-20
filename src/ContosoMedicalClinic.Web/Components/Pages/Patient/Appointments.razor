@@ -73,6 +73,12 @@
                                             </button>
                                         </div>
                                     }
+                                    else if (apt.Status == "Cancelled")
+                                    {
+                                        <button class="btn btn-sm btn-outline-success" @onclick="() => ResumeAppointment(apt.AppointmentId)">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i>Resume
+                                        </button>
+                                    }
                                 </td>
                             </tr>
                         }
@@ -203,6 +209,21 @@
         catch (Exception ex)
         {
             _errorMessage = $"Failed to cancel appointment: {ex.Message}";
+        }
+    }
+
+    private async Task ResumeAppointment(int id)
+    {
+        try
+        {
+            _errorMessage = null;
+            await AppointmentSvc.ResumeAppointmentAsync(id);
+            _successMessage = $"Appointment #{id} has been resumed.";
+            _appointments = await AppointmentSvc.GetAppointmentsByPatientAsync(_patientId);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Failed to resume appointment: {ex.Message}";
         }
     }
 }
