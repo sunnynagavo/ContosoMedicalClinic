@@ -93,6 +93,9 @@
                                                 <button class="btn btn-success" title="Confirm" @onclick='() => UpdateStatus(apt.AppointmentId, apt, "Confirmed")'>
                                                     <i class="bi bi-check-lg"></i> Confirm
                                                 </button>
+                                                <button class="btn btn-outline-primary" title="Reschedule" @onclick="() => OpenReschedule(apt)">
+                                                    <i class="bi bi-calendar2-event"></i>
+                                                </button>
                                                 <button class="btn btn-outline-danger" title="Cancel" @onclick='() => UpdateStatus(apt.AppointmentId, apt, "Cancelled")'>
                                                     <i class="bi bi-x-lg"></i>
                                                 </button>
@@ -101,6 +104,9 @@
                                             {
                                                 <button class="btn btn-primary" title="Mark Completed" @onclick='() => UpdateStatus(apt.AppointmentId, apt, "Completed")'>
                                                     <i class="bi bi-check-circle"></i> Complete
+                                                </button>
+                                                <button class="btn btn-outline-primary" title="Reschedule" @onclick="() => OpenReschedule(apt)">
+                                                    <i class="bi bi-calendar2-event"></i>
                                                 </button>
                                                 <button class="btn btn-outline-warning" title="No Show" @onclick='() => UpdateStatus(apt.AppointmentId, apt, "NoShow")'>
                                                     <i class="bi bi-person-x"></i>
@@ -122,6 +128,48 @@
                 </div>
             }
         </div>
+
+        @if (_rescheduleTarget is not null)
+        {
+            <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title"><i class="bi bi-calendar2-event me-2"></i>Reschedule Appointment #@_rescheduleTarget.AppointmentId</h5>
+                            <button type="button" class="btn-close btn-close-white" @onclick="CloseReschedule"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3 p-3 bg-light rounded small">
+                                <strong>Patient:</strong> @GetPatientName(_rescheduleTarget.PatientId) &middot;
+                                <strong>Provider:</strong> @GetProviderName(_rescheduleTarget.ProviderId) &middot;
+                                <strong>Current:</strong> @_rescheduleTarget.AppointmentDate at @_rescheduleTarget.StartTime – @_rescheduleTarget.EndTime
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">New Date</label>
+                                <input type="date" class="form-control" @bind="_newDate" min="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label class="form-label fw-bold">Start Time</label>
+                                    <input type="time" class="form-control" @bind="_newStartTime" />
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-bold">End Time</label>
+                                    <input type="time" class="form-control" @bind="_newEndTime" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-outline-secondary" @onclick="CloseReschedule">Cancel</button>
+                            <button class="btn btn-primary" @onclick="ConfirmReschedule" disabled="@_isSaving">
+                                @if (_isSaving) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                                <i class="bi bi-check-lg me-1"></i>Confirm Reschedule
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
@@ -133,6 +181,13 @@
     private DateOnly? _filterDate;
     private string _filterStatus = "";
     private string? _statusMessage;
+
+    // Reschedule state
+    private AppointmentDto? _rescheduleTarget;
+    private DateTime? _newDate;
+    private TimeOnly? _newStartTime;
+    private TimeOnly? _newEndTime;
+    private bool _isSaving;
 
     private List<AppointmentDto> _filteredAppointments =>
         (_appointments ?? [])
@@ -197,5 +252,41 @@
             StateHasChanged();
         }
         catch (Exception ex) { _statusMessage = $"Error updating appointment #{id}: {ex.Message}"; }
+    }
+
+    private void OpenReschedule(AppointmentDto apt)
+    {
+        _rescheduleTarget = apt;
+        _newDate = DateTime.TryParse(apt.AppointmentDate, out var d) ? d : DateTime.Today;
+        _newStartTime = TimeOnly.TryParse(apt.StartTime, out var st) ? st : new TimeOnly(9, 0);
+        _newEndTime = TimeOnly.TryParse(apt.EndTime, out var et) ? et : new TimeOnly(9, 30);
+        _statusMessage = null;
+    }
+
+    private void CloseReschedule() => _rescheduleTarget = null;
+
+    private async Task ConfirmReschedule()
+    {
+        if (_rescheduleTarget is null || !_newDate.HasValue || !_newStartTime.HasValue || !_newEndTime.HasValue)
+        {
+            _statusMessage = "Error: Please fill in all date and time fields.";
+            return;
+        }
+
+        try
+        {
+            _isSaving = true;
+            _statusMessage = null;
+            var dateStr = _newDate.Value.ToString("yyyy-MM-dd");
+            var startStr = _newStartTime.Value.ToString("HH:mm");
+            var endStr = _newEndTime.Value.ToString("HH:mm");
+            await AppointmentSvc.RescheduleAsync(_rescheduleTarget.AppointmentId, dateStr, startStr, endStr);
+            _statusMessage = $"Appointment #{_rescheduleTarget.AppointmentId} rescheduled to {dateStr} at {startStr}";
+            _rescheduleTarget = null;
+            await LoadAppointments();
+            StateHasChanged();
+        }
+        catch (Exception ex) { _statusMessage = $"Error rescheduling: {ex.Message}"; }
+        finally { _isSaving = false; }
     }
 }
