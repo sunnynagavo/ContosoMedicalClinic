@@ -1,7 +1,10 @@
 @page "/patient/visits"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @attribute [Authorize(Roles = "Patient")]
 @inject IMedicalRecordService MedRecordSvc
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>Visit History - Contoso Medical Clinic</PageTitle>
@@ -61,11 +64,18 @@
 
 @code {
     private List<VisitNoteDto>? _visitNotes;
-    private const int DemoPatientId = 1;
+    private int _patientId = 1;
 
     protected override async Task OnInitializedAsync()
     {
-        try { _visitNotes = await MedRecordSvc.GetVisitNotesByPatientAsync(DemoPatientId); }
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var patientIdClaim = authState.User.FindFirst("PatientId")?.Value;
+            _patientId = int.TryParse(patientIdClaim, out var pid) ? pid : 1;
+
+            _visitNotes = await MedRecordSvc.GetVisitNotesByPatientAsync(_patientId);
+        }
         catch { _visitNotes = []; }
     }
 }

@@ -109,7 +109,11 @@ VALUES
     (3, 'B+', 'Sulfa drugs', 'Metformin 500mg BID, Atorvastatin 20mg', 'Type 2 Diabetes, High cholesterol', 'Both parents: diabetes'),
     (5, 'AB+', 'Latex', 'Ibuprofen PRN', 'None', 'No significant family history'),
     (7, 'A-', 'Aspirin', 'Amlodipine 5mg, Metoprolol 25mg', 'Hypertension, AFib', 'Father: stroke, Mother: hypertension'),
-    (9, 'O+', 'Codeine', 'Omeprazole 20mg, Aspirin 81mg', 'GERD, CAD', 'Father: MI at 55, Mother: breast cancer');
+    (9, 'O+', 'Codeine', 'Omeprazole 20mg, Aspirin 81mg', 'GERD, CAD', 'Father: MI at 55, Mother: breast cancer'),
+    (4, 'B-', 'None known', 'None', 'None', 'No significant family history'),
+    (6, 'A+', 'None known', 'None', 'None', 'Mother: asthma'),
+    (8, 'O+', 'Shellfish', 'Birth control', 'None', 'No significant family history'),
+    (10, 'AB-', 'None known', 'Multivitamin', 'None', 'Father: high cholesterol');
 
 -- Appointments (mix of past and future)
 INSERT INTO dbo.Appointments (PatientId, ProviderId, ServiceId, AppointmentDate, StartTime, EndTime, Status, Notes)
@@ -269,11 +273,11 @@ VALUES
     ('alice.johnson@email.com',  'DEMO_HASH', 'Alice Johnson',   'Patient', 2, NULL),
     ('carlos.garcia@email.com',  'DEMO_HASH', 'Carlos Garcia',   'Patient', 3, NULL),
     -- Doctor accounts
-    ('sarah.chen@contoso.com',   'DEMO_HASH', 'Dr. Sarah Chen',  'Doctor', NULL, 1),
-    ('michael.r@contoso.com',    'DEMO_HASH', 'Dr. Michael R.',  'Doctor', NULL, 2),
-    ('priya.patel@contoso.com',  'DEMO_HASH', 'Dr. Priya Patel', 'Doctor', NULL, 3),
+    ('sarah.chen@contosomedical.com',   'DEMO_HASH', 'Dr. Sarah Chen',  'Doctor', NULL, 1),
+    ('james.wilson@contosomedical.com',    'DEMO_HASH', 'Dr. James Wilson',  'Doctor', NULL, 2),
+    ('maria.rodriguez@contosomedical.com',  'DEMO_HASH', 'Dr. Maria Rodriguez', 'Doctor', NULL, 3),
     -- Staff accounts
-    ('jennifer.l@contoso.com',   'DEMO_HASH', 'Jennifer Lopez',  'Staff', NULL, 7),
-    ('robert.w@contoso.com',     'DEMO_HASH', 'Robert Wilson',   'Staff', NULL, 8),
+    ('robert.johnson@contosomedical.com',   'DEMO_HASH', 'Robert Johnson',  'Staff', NULL, 7),
+    ('amanda.white@contosomedical.com',     'DEMO_HASH', 'Amanda White',   'Staff', NULL, 8),
     -- Admin account
-    ('admin@contoso.com',        'DEMO_HASH', 'System Admin',    'Admin', NULL, NULL);
+    ('admin@contosomedical.com',        'DEMO_HASH', 'System Admin',    'Admin', NULL, NULL);

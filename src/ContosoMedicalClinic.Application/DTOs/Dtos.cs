@@ -59,6 +59,8 @@ public record CreatePaymentDto(
     int InvoiceId, int PatientId, decimal Amount,
     string PaymentMethod, string? ReferenceNumber = null, string? Notes = null);
 
+public record ProviderServiceDto(int ProviderId, int ServiceId);
+
 public record MedicalRecordDto(
     int RecordId, int PatientId, string? BloodType, string? Allergies,
     string? CurrentMedications, string? ChronicConditions, string? FamilyHistory);

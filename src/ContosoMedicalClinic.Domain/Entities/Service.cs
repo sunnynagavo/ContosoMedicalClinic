@@ -21,6 +21,7 @@ public class Service
     public string? ProcedureCode { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     // Navigation
     public string? CategoryName { get; set; }

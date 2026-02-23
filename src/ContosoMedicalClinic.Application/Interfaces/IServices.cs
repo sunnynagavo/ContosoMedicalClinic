@@ -34,6 +34,7 @@ public interface IPatientService
     Task<PatientDto?> GetPatientAsync(int patientId);
     Task<PatientDto> CreatePatientAsync(PatientDto patient);
     Task<PatientDto> UpdatePatientAsync(int patientId, PatientDto patient);
+    Task DeletePatientAsync(int patientId);
 }
 
 public interface IProviderService
@@ -90,6 +91,7 @@ public interface IInsuranceService
     Task<List<InsuranceClaimDto>> GetClaimsAsync();
     Task<InsuranceClaimDto> CreateClaimAsync(InsuranceClaimDto claim);
     Task<InsuranceClaimDto> UpdateClaimAsync(int claimId, InsuranceClaimDto claim);
+    Task DeleteInsuranceProviderAsync(int id);
 }
 
 public interface IAuthService

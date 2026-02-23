@@ -130,6 +130,13 @@
         { "role": "anonymous", "actions": ["read", "create", "update", "delete"] }
       ]
     },
+    "ProviderService": {
+      "source": "dbo.ProviderServices",
+      "rest": { "path": "/ProviderService" },
+      "permissions": [
+        { "role": "anonymous", "actions": ["read"] }
+      ]
+    },
     "ProviderDetails": {
       "source": {
         "object": "dbo.vw_ProviderDetails",

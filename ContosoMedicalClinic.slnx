@@ -8,4 +8,7 @@
     <Project Path="src/ContosoMedicalClinic.ServiceDefaults/ContosoMedicalClinic.ServiceDefaults.csproj" />
     <Project Path="src/ContosoMedicalClinic.Web/ContosoMedicalClinic.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ContosoMedicalClinic.Tests/ContosoMedicalClinic.Tests.csproj" />
+  </Folder>
 </Solution>

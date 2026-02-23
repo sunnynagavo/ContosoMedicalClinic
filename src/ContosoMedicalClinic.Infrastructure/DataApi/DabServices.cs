@@ -1,5 +1,6 @@
 using ContosoMedicalClinic.Application.DTOs;
 using ContosoMedicalClinic.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace ContosoMedicalClinic.Infrastructure.DataApi;
 
@@ -38,8 +39,12 @@ public class AppointmentService(DabHttpClient dab) : IAppointmentService
     public async Task<List<AppointmentDto>> GetAppointmentsByProviderAsync(int providerId) =>
         await dab.GetListAsync<AppointmentDto>("Appointment", $"ProviderId eq {providerId}");
 
-    public async Task<List<AppointmentDto>> GetAppointmentsByDateAsync(string date) =>
-        await dab.GetListAsync<AppointmentDto>("Appointment", $"AppointmentDate eq {date}");
+    public async Task<List<AppointmentDto>> GetAppointmentsByDateAsync(string date)
+    {
+        if (!DateOnly.TryParseExact(date, "yyyy-MM-dd", out _))
+            return [];
+        return await dab.GetListAsync<AppointmentDto>("Appointment", $"AppointmentDate eq {date}");
+    }
 
     public async Task<AppointmentDto?> GetAppointmentAsync(int appointmentId) =>
         await dab.GetByIdAsync<AppointmentDto>("Appointment", appointmentId, "AppointmentId");
@@ -91,6 +96,9 @@ public class PatientService(DabHttpClient dab) : IPatientService
 
     public async Task<PatientDto> UpdatePatientAsync(int patientId, PatientDto patient) =>
         await dab.UpdateAsync<PatientDto>("Patient", patientId, patient, "PatientId");
+
+    public async Task DeletePatientAsync(int patientId) =>
+        await dab.DeleteAsync("Patient", patientId, "PatientId");
 }
 
 public class ProviderService(DabHttpClient dab) : IProviderService
@@ -101,8 +109,13 @@ public class ProviderService(DabHttpClient dab) : IProviderService
     public async Task<ProviderDto?> GetProviderAsync(int providerId) =>
         await dab.GetByIdAsync<ProviderDto>("ProviderDetails", providerId, "ProviderId");
 
-    public async Task<List<ProviderDto>> GetProvidersByServiceAsync(int serviceId) =>
-        await dab.GetListAsync<ProviderDto>("ProviderDetails"); // Filter client-side for now
+    public async Task<List<ProviderDto>> GetProvidersByServiceAsync(int serviceId)
+    {
+        var mappings = await dab.GetListAsync<ProviderServiceDto>("ProviderService", $"ServiceId eq {serviceId}");
+        var providerIds = mappings.Select(m => m.ProviderId).ToHashSet();
+        var providers = await dab.GetListAsync<ProviderDto>("ProviderDetails");
+        return providers.Where(p => providerIds.Contains(p.ProviderId)).ToList();
+    }
 }
 
 public class InvoiceService(DabHttpClient dab) : IInvoiceService
@@ -213,15 +226,19 @@ public class InsuranceService(DabHttpClient dab) : IInsuranceService
 
     public async Task<InsuranceClaimDto> UpdateClaimAsync(int claimId, InsuranceClaimDto claim) =>
         await dab.UpdateAsync<InsuranceClaimDto>("InsuranceClaim", claimId, claim, "ClaimId");
+
+    public async Task DeleteInsuranceProviderAsync(int id) =>
+        await dab.DeleteAsync("InsuranceProvider", id, "InsuranceProviderId");
 }
 
-public class AuthService(DabHttpClient dab) : IAuthService
+public class AuthService(DabHttpClient dab, IConfiguration config) : IAuthService
 {
     private const string DemoHash = "DEMO_HASH";
 
     public async Task<UserAccountDto?> GetUserByEmailAsync(string email)
     {
-        var users = await dab.GetListAsync<UserAccountDto>("UserAccount", $"Email eq '{email}'");
+        var sanitizedEmail = email.Replace("'", "''");
+        var users = await dab.GetListAsync<UserAccountDto>("UserAccount", $"Email eq '{sanitizedEmail}'");
         return users.FirstOrDefault();
     }
 
@@ -240,8 +257,9 @@ public class AuthService(DabHttpClient dab) : IAuthService
 
     public string HashPassword(string password)
     {
+        var hmacKey = config["Security:HmacKey"] ?? "ContosoMedicalClinic2026";
         using var hmac = new System.Security.Cryptography.HMACSHA256(
-            System.Text.Encoding.UTF8.GetBytes("ContosoMedicalClinic2026"));
+            System.Text.Encoding.UTF8.GetBytes(hmacKey));
         var hash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
         return Convert.ToBase64String(hash);
     }

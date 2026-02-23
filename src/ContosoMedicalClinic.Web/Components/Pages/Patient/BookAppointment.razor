@@ -1,10 +1,13 @@
 @page "/patient/appointments/book"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @attribute [Authorize(Roles = "Patient")]
 @inject IServiceCatalogService ServiceCatalog
 @inject IProviderService ProviderSvc
 @inject IAppointmentService AppointmentSvc
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>Book Appointment - Contoso Medical Clinic</PageTitle>
@@ -178,6 +181,7 @@
     private string _selectedTime = "";
     private string? _errorMessage;
     private bool _bookingSuccess;
+    private int _patientId = 1;
 
     private readonly List<string> _timeSlots =
     [
@@ -190,6 +194,10 @@
     {
         try
         {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var patientIdClaim = authState.User.FindFirst("PatientId")?.Value;
+            _patientId = int.TryParse(patientIdClaim, out var pid) ? pid : 1;
+
             _categories = await ServiceCatalog.GetCategoriesAsync();
             _services = await ServiceCatalog.GetServicesAsync();
             _providers = await ProviderSvc.GetProvidersAsync();
@@ -217,7 +225,7 @@
             var endTime = startTime.Add(TimeSpan.FromMinutes(duration));
 
             await AppointmentSvc.CreateAppointmentAsync(new CreateAppointmentDto(
-                PatientId: 1, // Demo patient
+                PatientId: _patientId,
                 ProviderId: _selectedProviderId,
                 ServiceId: _selectedServiceId,
                 AppointmentDate: _selectedDate!.Value.ToString("yyyy-MM-dd"),

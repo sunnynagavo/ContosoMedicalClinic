@@ -22,7 +22,8 @@ CREATE TABLE dbo.Services (
     DefaultPrice DECIMAL(10,2) NOT NULL,
     ProcedureCode NVARCHAR(20) NULL,
     IsActive BIT NOT NULL DEFAULT 1,
-    CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE()
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 NULL
 );
 
 -- Staff

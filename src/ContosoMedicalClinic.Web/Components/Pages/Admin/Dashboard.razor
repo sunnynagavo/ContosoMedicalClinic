@@ -13,6 +13,11 @@
     <div class="container">
         <h2 class="section-title mb-4"><i class="bi bi-graph-up me-2"></i>Admin Dashboard</h2>
 
+        @if (!string.IsNullOrEmpty(_loadError))
+        {
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>@_loadError</div>
+        }
+
         <!-- KPI Cards -->
         <div class="row g-3 mb-4">
             <div class="col-md-3">
@@ -73,6 +78,7 @@
 
 @code {
     private int _patientCount, _staffCount, _appointmentCount, _outstandingInvoices;
+    private string? _loadError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,6 +93,6 @@
             _appointmentCount = appointments.Count;
             _outstandingInvoices = invoices.Count(i => i.Status is "Sent" or "Overdue" or "PartiallyPaid");
         }
-        catch { /* Dashboard shows zeros on error */ }
+        catch (Exception ex) { _loadError = $"Failed to load dashboard data: {ex.Message}"; }
     }
 }

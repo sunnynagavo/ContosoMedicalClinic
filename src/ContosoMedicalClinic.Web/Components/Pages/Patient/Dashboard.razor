@@ -1,8 +1,11 @@
 @page "/patient/dashboard"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @attribute [Authorize(Roles = "Patient")]
 @inject IAppointmentService AppointmentSvc
 @inject IInvoiceService InvoiceSvc
+@inject AuthenticationStateProvider AuthStateProvider
 @rendermode InteractiveServer
 
 <PageTitle>Patient Dashboard - Contoso Medical Clinic</PageTitle>
@@ -122,19 +125,23 @@
 @code {
     private List<AppointmentDto>? _appointments;
     private List<InvoiceDto>? _invoices;
-
-    // Demo: using PatientId=1 (would come from auth in real app)
-    private const int DemoPatientId = 1;
+    private int _patientId = 1;
+    private string? _loadError;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            _appointments = await AppointmentSvc.GetAppointmentsByPatientAsync(DemoPatientId);
-            _invoices = await InvoiceSvc.GetInvoicesByPatientAsync(DemoPatientId);
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var patientIdClaim = authState.User.FindFirst("PatientId")?.Value;
+            _patientId = int.TryParse(patientIdClaim, out var pid) ? pid : 1;
+
+            _appointments = await AppointmentSvc.GetAppointmentsByPatientAsync(_patientId);
+            _invoices = await InvoiceSvc.GetInvoicesByPatientAsync(_patientId);
         }
-        catch
+        catch (Exception ex)
         {
+            _loadError = ex.Message;
             _appointments = [];
             _invoices = [];
         }

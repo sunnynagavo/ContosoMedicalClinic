@@ -40,21 +40,33 @@ public class DabHttpClient(HttpClient httpClient)
     public async Task<T> CreateAsync<T>(string entity, object data)
     {
         var response = await httpClient.PostAsJsonAsync($"/api/{entity}", data, JsonOptions);
-        response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<T>(JsonOptions))!;
+        await EnsureSuccessAsync(response, entity, "create");
+        return await response.Content.ReadFromJsonAsync<T>(JsonOptions)
+            ?? throw new InvalidOperationException($"Empty response from DAB after creating {entity}.");
     }
 
     public async Task<T> UpdateAsync<T>(string entity, int id, object data, string pkColumn = "Id")
     {
         var response = await httpClient.PatchAsJsonAsync($"/api/{entity}/{pkColumn}/{id}", data, JsonOptions);
-        response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<T>(JsonOptions))!;
+        await EnsureSuccessAsync(response, entity, "update");
+        return await response.Content.ReadFromJsonAsync<T>(JsonOptions)
+            ?? throw new InvalidOperationException($"Empty response from DAB after updating {entity}/{id}.");
     }
 
     public async Task DeleteAsync(string entity, int id, string pkColumn = "Id")
     {
         var response = await httpClient.DeleteAsync($"/api/{entity}/{pkColumn}/{id}");
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessAsync(response, entity, "delete");
+    }
+
+    private static async Task EnsureSuccessAsync(HttpResponseMessage response, string entity, string operation)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException(
+                $"DAB {operation} on '{entity}' failed ({(int)response.StatusCode}): {body}");
+        }
     }
 
     private record DabListResponse<T>(List<T> Value);
