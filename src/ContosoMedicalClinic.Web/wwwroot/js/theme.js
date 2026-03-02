@@ -1,14 +1,19 @@
-// Dark/Light theme toggle with localStorage persistence
+// Dark/Light theme toggle with localStorage persistence and cross-tab sync
 window.themeManager = {
+    apply: function (theme) {
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        var icon = document.getElementById('themeIcon');
+        if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    },
     init: function () {
-        const saved = localStorage.getItem('cmc-theme') || 'light';
-        document.documentElement.setAttribute('data-bs-theme', saved);
+        var saved = localStorage.getItem('cmc-theme') || 'light';
+        this.apply(saved);
     },
     toggle: function () {
-        const current = document.documentElement.getAttribute('data-bs-theme') || 'light';
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-bs-theme', next);
+        var current = document.documentElement.getAttribute('data-bs-theme') || 'light';
+        var next = current === 'dark' ? 'light' : 'dark';
         localStorage.setItem('cmc-theme', next);
+        this.apply(next);
         return next;
     },
     get: function () {
@@ -18,3 +23,10 @@ window.themeManager = {
 
 // Apply saved theme immediately to prevent flash
 window.themeManager.init();
+
+// Sync theme across tabs when localStorage changes
+window.addEventListener('storage', function (e) {
+    if (e.key === 'cmc-theme' && e.newValue) {
+        window.themeManager.apply(e.newValue);
+    }
+});

@@ -133,14 +133,6 @@
 
 <script>
     function toggleThemeUI() {
-        var next = window.themeManager.toggle();
-        var icon = document.getElementById('themeIcon');
-        icon.className = next === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        window.themeManager.toggle();
     }
-    // Set correct icon on load
-    document.addEventListener('DOMContentLoaded', function () {
-        var theme = window.themeManager.get();
-        var icon = document.getElementById('themeIcon');
-        if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-    });
 </script>
