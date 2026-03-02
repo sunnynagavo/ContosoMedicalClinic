@@ -130,3 +130,65 @@ h1:focus { outline: none; }
 .darker-border-checkbox.form-check-input { border-color: #929292; }
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder { color: var(--bs-secondary-color); text-align: end; }
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder { text-align: start; }
+
+/* ===== Dark Mode Overrides ===== */
+[data-bs-theme="dark"] {
+    --cmc-light: #1a202c;
+    --cmc-dark: #e2e8f0;
+}
+
+[data-bs-theme="dark"] body {
+    background-color: #1a202c;
+    color: #e2e8f0;
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: #2d3748;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+[data-bs-theme="dark"] .kpi-card .kpi-value { color: #e2e8f0; }
+[data-bs-theme="dark"] .kpi-card .kpi-label { color: #a0aec0; }
+
+[data-bs-theme="dark"] .table-clinic thead { background-color: var(--cmc-primary); }
+
+[data-bs-theme="dark"] .section-title { color: #e2e8f0; }
+
+[data-bs-theme="dark"] .hero-section {
+    background: linear-gradient(135deg, #095456 0%, #2a9d8f 100%);
+}
+
+[data-bs-theme="dark"] .dropdown-menu {
+    background-color: #2d3748;
+    border-color: #4a5568;
+}
+[data-bs-theme="dark"] .dropdown-item { color: #e2e8f0; }
+[data-bs-theme="dark"] .dropdown-item:hover { background-color: #4a5568; color: #fff; }
+
+[data-bs-theme="dark"] .selectable-card:hover {
+    background-color: rgba(78, 205, 196, 0.1);
+}
+[data-bs-theme="dark"] .selectable-card.selected {
+    background-color: rgba(78, 205, 196, 0.15);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    font-size: 1.1rem;
+    padding: 0;
+}
+.theme-toggle:hover {
+    background-color: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.5);
+}

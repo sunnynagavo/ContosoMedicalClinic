@@ -66,8 +66,13 @@
                 </AuthorizeView>
             </ul>
 
-            <!-- Auth section on the right -->
-            <ul class="navbar-nav ms-auto">
+            <!-- Theme toggle & Auth section on the right -->
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item me-2">
+                    <button class="theme-toggle" onclick="toggleThemeUI()" title="Toggle dark/light mode" id="themeToggleBtn">
+                        <i class="bi bi-moon-fill" id="themeIcon"></i>
+                    </button>
+                </li>
                 <AuthorizeView>
                     <Authorized>
                         <li class="nav-item d-flex align-items-center">
@@ -125,3 +130,17 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+<script>
+    function toggleThemeUI() {
+        var next = window.themeManager.toggle();
+        var icon = document.getElementById('themeIcon');
+        icon.className = next === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    }
+    // Set correct icon on load
+    document.addEventListener('DOMContentLoaded', function () {
+        var theme = window.themeManager.get();
+        var icon = document.getElementById('themeIcon');
+        if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    });
+</script>
