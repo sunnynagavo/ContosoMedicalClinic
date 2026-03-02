@@ -147,6 +147,11 @@ h1:focus { outline: none; }
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
+[data-bs-theme="dark"] .card-header {
+    background-color: #1a202c;
+    border-color: #4a5568;
+}
+
 [data-bs-theme="dark"] .kpi-card .kpi-value { color: #e2e8f0; }
 [data-bs-theme="dark"] .kpi-card .kpi-label { color: #a0aec0; }
 

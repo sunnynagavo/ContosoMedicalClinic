@@ -20,7 +20,7 @@
                 var isExpanded = _expandedCategories.Contains(catId);
                 <div class="mb-3">
                     <div class="card">
-                        <div class="card-header bg-white d-flex align-items-center justify-content-between py-3"
+                        <div class="card-header d-flex align-items-center justify-content-between py-3"
                              style="cursor:pointer;" @onclick="() => ToggleCategory(catId)">
                             <h5 class="fw-bold text-primary mb-0">
                                 <i class="bi @(isExpanded ? "bi-chevron-down" : "bi-chevron-right") me-2"></i>@category.Name
