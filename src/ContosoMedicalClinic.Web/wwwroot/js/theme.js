@@ -24,6 +24,11 @@ window.themeManager = {
 // Apply saved theme immediately to prevent flash
 window.themeManager.init();
 
+// Re-apply theme after Blazor enhanced navigation resets the DOM
+document.addEventListener('blazor:enhancedload', function () {
+    window.themeManager.init();
+});
+
 // Sync theme across tabs when localStorage changes
 window.addEventListener('storage', function (e) {
     if (e.key === 'cmc-theme' && e.newValue) {
